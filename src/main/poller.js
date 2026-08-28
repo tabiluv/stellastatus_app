@@ -133,6 +133,12 @@ class Poller extends EventEmitter {
       const wentLive = [];
       const wentOffline = [];
       for (const m of members) {
+        // 조회 실패(연결 끊김 등)로 라이브 여부를 알 수 없는 멤버는 '상태 불명'으로 보고
+        // 이전 상태를 그대로 유지하며 전환으로 치지 않는다.
+        //  → 와이파이가 끊겼다 다시 붙을 때 라이브러리가 그 사이 멤버를 isLive:false(error) 로
+        //    돌려주는데, 이를 '오프라인' 으로 기록하면 재연결 시 '오프라인→라이브' 로 오인해
+        //    알림·브라우저 자동 열기가 다시 발동한다(끊길 때 휴방 알림도 잘못 뜬다). 그것을 막는다.
+        if (m.error) continue;
         const prev = this._prevLive.get(m.key);
         if (prev === false && m.isLive) wentLive.push(m);
         if (prev === true && !m.isLive) wentOffline.push(m);
