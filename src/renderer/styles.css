@@ -142,6 +142,24 @@ body {
 
 /* ── 멤버(가로 스크롤) ───────────────────────── */
 /* 멤버: 세로 스크롤 그리드 (위/아래 가장자리는 그라데이션으로 부드럽게 페이드) */
+/* 통합 설문 배너 */
+.survey-banner { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  margin: 2px 0 4px; padding: 12px 14px; border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent, #8a7ffb) 40%, var(--panel-brd));
+  background: linear-gradient(100deg, color-mix(in srgb, var(--accent, #8a7ffb) 20%, transparent), color-mix(in srgb, var(--accent, #8a7ffb) 7%, transparent)); }
+.survey-banner[hidden] { display: none; }
+.survey-banner .sb-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.survey-banner .sb-text b { font-size: 13.5px; font-weight: 700; color: var(--text); }
+.survey-banner .sb-text span { font-size: 12px; color: var(--text-dim); }
+.survey-banner .sb-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.sb-join { -webkit-app-region: no-drag; cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--accent-ink, #fff);
+  background: var(--accent, #8a7ffb); border: none; border-radius: 9px; padding: 7px 14px; transition: filter .12s, transform .1s; }
+.sb-join:hover { filter: brightness(1.08); }
+.sb-join:active { transform: scale(.96); }
+.sb-close { -webkit-app-region: no-drag; cursor: pointer; width: 26px; height: 26px; border-radius: 8px; border: none;
+  background: transparent; color: var(--text-mute); font-size: 13px; display: inline-flex; align-items: center; justify-content: center; transition: background .12s, color .12s; }
+.sb-close:hover { background: rgba(255,255,255,.08); color: var(--text); }
+
 .members {
   flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 6px 8px 14px 3px;
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 26px), transparent 100%);

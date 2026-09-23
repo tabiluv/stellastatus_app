@@ -29,6 +29,12 @@ contextBridge.exposeInMainWorld('stella', {
   // 외부 링크 / 창 제어
   openExternal: (url) => ipcRenderer.invoke('open:external', url),
   getWebCalUrl: () => ipcRenderer.invoke('app:webCalUrl'),
+
+  // 통합 설문
+  getSurveyUrl: () => ipcRenderer.invoke('survey:url'),
+  getSurveyStatus: () => ipcRenderer.invoke('survey:status'),
+  dismissSurvey: () => ipcRenderer.invoke('survey:dismiss'),
+  isSurveyDismissed: () => ipcRenderer.invoke('survey:dismissed'),
   minimize: () => ipcRenderer.send('window:minimize'),
   maximizeToggle: () => ipcRenderer.send('window:maximize-toggle'),
   close: () => ipcRenderer.send('window:close'),

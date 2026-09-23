@@ -47,6 +47,7 @@
       'sched.noinfo': '정보 없음', 'sched.noinfoDesc': '오늘 등록된 일정이 없어요.', 'cal.open': '캘린더로 보기',
       'cal.ice': '빙하기', 'cal.noSchedule': '일정이 없어요', 'cal.count': '개 일정',
       'err.copy': '오류 복사', 'err.copied': '오류 메시지를 복사했어요',
+      'survey.bannerT': '스텔라상태 · 스텔라리움 통합에 관한 설문', 'survey.bannerD': '서비스 통합에 대한 파스텔분들의 의견을 알려주세요.', 'survey.bannerTVoted': '참여해 주셔서 감사드려요.', 'survey.bannerDVoted': '응답을 수정하거나 취소할 수 있어요.', 'survey.join': '참여하기', 'survey.edit': '응답 수정', 'survey.dismiss': '닫기',
       'schedD.time': '시각', 'schedD.plan': '뱅온', 'schedD.liveTitle': '방송 제목', 'schedD.category': '카테고리', 'schedD.viewers': '시청자',
       // 설정 공통
       'settings.title': '설정',
@@ -147,6 +148,7 @@
       'sched.noinfo': 'No info', 'sched.noinfoDesc': 'No schedule today.', 'cal.open': 'Calendar view',
       'cal.ice': 'Streaming break', 'cal.noSchedule': 'No schedule', 'cal.count': ' events',
       'err.copy': 'Copy error', 'err.copied': 'Error message copied',
+      'survey.bannerT': 'Survey on merging StellaStatus & Stellarium', 'survey.bannerD': 'Share your thoughts on combining the services.', 'survey.bannerTVoted': 'Thanks for taking part.', 'survey.bannerDVoted': 'You can change or cancel your response.', 'survey.join': 'Take part', 'survey.edit': 'Edit response', 'survey.dismiss': 'Dismiss',
       'schedD.time': 'Time', 'schedD.plan': 'Bang-on', 'schedD.liveTitle': 'Live title', 'schedD.category': 'Category', 'schedD.viewers': 'Viewers',
       'settings.title': 'Settings',
       'nav.general': 'General', 'nav.notify': 'Notifications', 'nav.info': 'About', 'nav.contact': 'Contact',
@@ -239,6 +241,7 @@
       'sched.noinfo': '情報なし', 'sched.noinfoDesc': '今日の予定はありません。', 'cal.open': 'カレンダー表示',
       'cal.ice': '配信休止', 'cal.noSchedule': '予定がありません', 'cal.count': '件',
       'err.copy': 'エラーをコピー', 'err.copied': 'エラーメッセージをコピーしました',
+      'survey.bannerT': 'ステラ状態・ステラリウム統合に関するアンケート', 'survey.bannerD': 'サービス統合について、パステルの皆さんのご意見をお聞かせください。', 'survey.bannerTVoted': 'ご参加ありがとうございます。', 'survey.bannerDVoted': '回答の変更・取り消しができます。', 'survey.join': '参加する', 'survey.edit': '回答を修正', 'survey.dismiss': '閉じる',
       'schedD.time': '時刻', 'schedD.plan': 'バンオン', 'schedD.liveTitle': '配信タイトル', 'schedD.category': 'カテゴリ', 'schedD.viewers': '視聴者',
       'settings.title': '設定',
       'nav.general': '一般', 'nav.notify': '通知', 'nav.info': '情報', 'nav.contact': 'お問い合わせ',

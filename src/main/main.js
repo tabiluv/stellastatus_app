@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
+const { randomUUID } = require('node:crypto');
 const {
   app,
   BrowserWindow,
@@ -362,10 +363,30 @@ function registerIpc() {
     if (typeof url === 'string' && /^(https?:\/\/|mailto:)/.test(url)) shell.openExternal(url);
   });
 
-  // 임베드 캘린더(web) 주소 — 개발 모드는 로컬 web 서버, 배포는 stellarium.kr.
-  // (환경변수 STELLA_WEB_CAL_URL 로 재정의 가능)
-  ipcMain.handle('app:webCalUrl', () =>
-    process.env.STELLA_WEB_CAL_URL || (isDev ? 'http://localhost:3000/calendar' : 'https://stellarium.kr/calendar'));
+  // web(stellarium.kr) 기준 주소 — 개발 모드는 로컬 web 서버, 배포는 stellarium.kr.
+  // (환경변수 STELLA_WEB_BASE 로 재정의 가능)
+  const webBase = () => process.env.STELLA_WEB_BASE || (isDev ? 'http://localhost:3000' : 'https://stellarium.kr');
+  ipcMain.handle('app:webCalUrl', () => process.env.STELLA_WEB_CAL_URL || `${webBase()}/calendar`);
+
+  // 통합 설문 — 익명 기기 id(개인정보 아님)를 만들어 두고, webview 주소·현재 상태를 렌더러에 준다.
+  const surveyDeviceId = () => {
+    let id = store.get('surveyDeviceId');
+    if (!id) { id = randomUUID(); store.set('surveyDeviceId', id); }
+    return id;
+  };
+  ipcMain.handle('survey:url', () => `${webBase()}/survey?d=${encodeURIComponent(surveyDeviceId())}`);
+  // 앱이 '설문 배너'를 띄울지 판단하려고 진행 여부·내 선택만 받아온다(집계는 안 받는다).
+  ipcMain.handle('survey:status', async () => {
+    try {
+      const r = await fetch(`${webBase()}/api/survey?d=${encodeURIComponent(surveyDeviceId())}`, { signal: AbortSignal.timeout(5000) });
+      if (!r.ok) return { open: false, choice: null };
+      const d = await r.json();
+      return { open: Boolean(d.open), choice: d.choice ?? null };
+    } catch { return { open: false, choice: null }; }
+  });
+  // 배너를 닫았는지(다시 안 띄우기) 플래그.
+  ipcMain.handle('survey:dismiss', () => { store.set('surveyBannerDismissed', true); return true; });
+  ipcMain.handle('survey:dismissed', () => Boolean(store.get('surveyBannerDismissed')));
 
   ipcMain.handle('update:check', () => {
     if (isDev) {

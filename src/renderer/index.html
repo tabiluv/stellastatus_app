@@ -61,6 +61,18 @@
       </div>
     </section>
 
+    <!-- 통합 설문 배너 (진행 중 · 아직 참여 안 함 · 닫지 않았을 때만) -->
+    <section class="survey-banner" id="surveyBanner" hidden>
+      <div class="sb-text">
+        <b id="surveyBannerT">스텔라상태 · 스텔라리움 통합에 관한 설문</b>
+        <span id="surveyBannerD">서비스 통합에 대한 파스텔분들의 의견을 알려주세요.</span>
+      </div>
+      <div class="sb-actions">
+        <button class="sb-join" id="surveyJoin">참여하기</button>
+        <button class="sb-close" id="surveyDismiss" data-i18n-title="survey.dismiss" title="닫기">✕</button>
+      </div>
+    </section>
+
     <!-- 멤버(세로 스크롤 그리드) -->
     <section class="members">
       <div class="grid" id="memberScroll"></div>
@@ -306,6 +318,18 @@
         <webview id="calWebview" class="cal-webview" src="about:blank"></webview>
         <div class="cal-embed-state" id="calLoading"><span class="cl-spinner"></span></div>
         <div class="cal-embed-state" id="calError" hidden></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 통합 설문 (web /survey 를 webview 로 임베드) -->
+  <div class="modal-backdrop" id="surveyModal" hidden>
+    <div class="modal cal-modal">
+      <button class="icon-btn cal-close" id="closeSurvey"></button>
+      <div class="cal-embed">
+        <webview id="surveyWebview" class="cal-webview" src="about:blank"></webview>
+        <div class="cal-embed-state" id="surveyLoading"><span class="cl-spinner"></span></div>
+        <div class="cal-embed-state" id="surveyError" hidden></div>
       </div>
     </div>
   </div>

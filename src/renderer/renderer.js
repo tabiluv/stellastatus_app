@@ -968,6 +968,49 @@
     });
     wv.src = url;
   }
+  // ── 통합 설문(web /survey 를 webview 로) ─────────────────────
+  async function openSurvey() {
+    openModalEl('#surveyModal');
+    const wv = $('#surveyWebview');
+    if (!wv || wv._loaded) return; // 최초 1회만 로드(참여 상태는 페이지가 스스로 관리)
+    wv._loaded = true;
+    const loading = $('#surveyLoading');
+    const errEl = $('#surveyError');
+    if (loading) loading.hidden = false;
+    if (errEl) errEl.hidden = true;
+    let url = '';
+    try { url = await api.getSurveyUrl(); } catch { /* 실패 시 아래에서 오류 표시 */ }
+    wv.addEventListener('did-finish-load', () => { if (loading) loading.hidden = true; });
+    wv.addEventListener('did-fail-load', (e) => {
+      if (e.errorCode === -3) return; // ABORTED 무시
+      if (loading) loading.hidden = true;
+      if (errEl) { errEl.hidden = false; errEl.innerHTML = errorBoxHtml(T('sched.error'), `${e.errorDescription || ''} — ${url}`); }
+    });
+    if (url) wv.src = url;
+  }
+  // 배너는 '진행 중 · 닫지 않음' 이면 보인다(집계는 받지 않는다).
+  // 이미 참여한 기기에도 계속 띄워, 언제든 눌러 응답을 수정하거나 취소할 수 있게 한다.
+  async function updateSurveyBanner() {
+    const banner = $('#surveyBanner');
+    if (!banner) return;
+    try {
+      if (await api.isSurveyDismissed()) { banner.hidden = true; return; }
+      const s = await api.getSurveyStatus();
+      if (!s || !s.open) { banner.hidden = true; return; }
+      const voted = !!s.choice;
+      $('#surveyBannerT').textContent = T(voted ? 'survey.bannerTVoted' : 'survey.bannerT');
+      $('#surveyBannerD').textContent = T(voted ? 'survey.bannerDVoted' : 'survey.bannerD');
+      $('#surveyJoin').textContent = T(voted ? 'survey.edit' : 'survey.join');
+      banner.hidden = false;
+    } catch { banner.hidden = true; }
+  }
+  function wireSurvey() {
+    $('#surveyJoin').addEventListener('click', openSurvey);
+    $('#surveyDismiss').addEventListener('click', async () => { $('#surveyBanner').hidden = true; try { await api.dismissSurvey(); } catch { /* 무시 */ } });
+    $('#closeSurvey').addEventListener('click', () => { closeModalEl('#surveyModal'); updateSurveyBanner(); });
+    $('#surveyModal').addEventListener('click', (e) => { if (e.target.id === 'surveyModal') { closeModalEl('#surveyModal'); updateSurveyBanner(); } });
+  }
+
   // 월 이동: 켜놓은 오른쪽 세부 패널은 그대로 유지한다(원래 선택한 날의 일정을 계속 보여줌).
   function calShift(delta) { let m = CAL.m + delta, y = CAL.y; if (m < 0) { m = 11; y--; } else if (m > 11) { m = 0; y++; } CAL.y = y; CAL.m = m; loadCalendar(); }
 
@@ -1383,6 +1426,7 @@
     renderNow(false);           // 멤버 카드(이름/상태/버튼)
     renderSchedule(true);       // 스케줄(강제 재렌더)
     updateSummary();            // 상단 요약
+    updateSurveyBanner();       // 설문 배너 문구(동적 텍스트)
     renderTerms();              // 이용약관 본문
     if (!$('#settingsModal').hidden) {
       buildMemberList('#subList', state.settings.subscribed, saveSubscriptions);
@@ -1648,7 +1692,7 @@
   // ── 공용 모달 열기/닫기(애니메이션) ───────────
   function openModalEl(sel) { const m = $(sel); m.hidden = false; void m.offsetHeight; m.classList.add('open'); }
   // 캘린더는 아래로 슬라이드하는 시간(.36s)에 맞춰 조금 더 늦게 감춘다.
-  function closeModalEl(sel) { const m = $(sel); m.classList.remove('open'); setTimeout(() => (m.hidden = true), sel === '#calModal' ? 380 : 240); }
+  function closeModalEl(sel) { const m = $(sel); m.classList.remove('open'); setTimeout(() => (m.hidden = true), (sel === '#calModal' || sel === '#surveyModal') ? 380 : 240); }
 
   // ── 문의하기(이메일 · GitHub 이슈 · X) ────────
   function wireContact() {
@@ -1846,6 +1890,7 @@
     setIcon('#closeTerms', 'x', 14);
     setIcon('#closeSched', 'x', 14);
     setIcon('#closeCal', 'x', 14);
+    setIcon('#closeSurvey', 'x', 14);
     // data-icon 속성이 있는 요소(설정 사이드바, 링크 등) 일괄 채우기
     document.querySelectorAll('[data-icon]').forEach((el) => (el.innerHTML = icon(el.dataset.icon, 16)));
   }
@@ -1869,6 +1914,7 @@
     wireTerms();
     wireSchedDetail();
     wireCalendar();
+    wireSurvey();
     wireWhatsNew();
 
     state.settings = await api.getSettings();
@@ -1898,6 +1944,9 @@
 
     // 업데이트 후 첫 실행이면 이번 버전에서 바뀐 점을 딱 1번 안내한다.
     maybeShowWhatsNew();
+
+    // 통합 설문 배너(진행 중 · 미참여 · 닫지 않음 일 때만) — 시작 시 1회 판단.
+    updateSurveyBanner();
 
     api.onMembers((members) => {
       try {
