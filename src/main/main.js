@@ -368,17 +368,15 @@ function registerIpc() {
   const webBase = () => process.env.STELLA_WEB_BASE || (isDev ? 'http://localhost:3000' : 'https://stellarium.kr');
   ipcMain.handle('app:webCalUrl', () => process.env.STELLA_WEB_CAL_URL || `${webBase()}/calendar`);
 
-  // 통합 설문 — 익명 기기 id(개인정보 아님)를 만들어 두고, webview 주소·현재 상태를 렌더러에 준다.
-  const surveyDeviceId = () => {
-    let id = store.get('surveyDeviceId');
-    if (!id) { id = randomUUID(); store.set('surveyDeviceId', id); }
-    return id;
-  };
-  ipcMain.handle('survey:url', () => `${webBase()}/survey?d=${encodeURIComponent(surveyDeviceId())}`);
-  // 앱이 '설문 배너'를 띄울지 판단하려고 진행 여부·내 선택만 받아온다(집계는 안 받는다).
+  // 통합 설문 — webview 로 web /survey 를 띄운다. `?embed=1` 은 "앱 임베드"라는 신호로,
+  // web 이 이걸 보면 사이트 헤더/푸터 없이 전체 화면으로 그린다. **중복 방지를 위해 이제
+  // 스텔라리움 로그인이 필요**하다 — 참여는 webview 안에서 로그인한 계정으로 이뤄진다.
+  ipcMain.handle('survey:url', () => `${webBase()}/survey?embed=1`);
+  // 배너를 띄울지 판단하려고 진행 여부만 받아온다(집계·개인 선택은 안 받는다 — 메인 프로세스
+  // fetch 에는 로그인 쿠키가 없어 choice 는 늘 null 이다. 참여 여부는 webview 안에서 확인된다).
   ipcMain.handle('survey:status', async () => {
     try {
-      const r = await fetch(`${webBase()}/api/survey?d=${encodeURIComponent(surveyDeviceId())}`, { signal: AbortSignal.timeout(5000) });
+      const r = await fetch(`${webBase()}/api/survey`, { signal: AbortSignal.timeout(5000) });
       if (!r.ok) return { open: false, choice: null };
       const d = await r.json();
       return { open: Boolean(d.open), choice: d.choice ?? null };
