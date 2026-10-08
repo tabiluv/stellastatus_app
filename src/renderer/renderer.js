@@ -361,6 +361,17 @@
     const pinBtn = card.querySelector('[data-pin]');
     if (pinBtn) pinBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePin(m.key); });
 
+    // 멤버 이름 클릭 → 앱 안 스텔라리움의 그 멤버 페이지로(기존 기능 ↔ 스텔라리움 연결)
+    const names = card.querySelector('.m-names');
+    if (names && m.slug) {
+      names.classList.add('to-stella');
+      names.setAttribute('role', 'button');
+      names.setAttribute('tabindex', '0');
+      names.title = T('card.toStella');
+      names.addEventListener('click', (e) => { e.stopPropagation(); openStellariumMember(m.slug); });
+      names.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStellariumMember(m.slug); } });
+    }
+
     // 프로필(아바타) 클릭 → 이름 블러 + 소셜 아이콘 팝아웃 토글
     if (SOCIALS.length) {
       const head = card.querySelector('.member-head');
@@ -1009,6 +1020,64 @@
     $('#surveyDismiss').addEventListener('click', async () => { $('#surveyBanner').hidden = true; try { await api.dismissSurvey(); } catch { /* 무시 */ } });
     $('#closeSurvey').addEventListener('click', () => { closeModalEl('#surveyModal'); updateSurveyBanner(); });
     $('#surveyModal').addEventListener('click', (e) => { if (e.target.id === 'surveyModal') { closeModalEl('#surveyModal'); updateSurveyBanner(); } });
+  }
+
+  // ── 화면 전환: 스텔라상태(기존 UI) ↔ 스텔라리움(통합 홈/멤버 페이지를 webview 로) ──────
+  // 서비스 초기 기본은 'status'(기존 UI). 선택은 설정에 저장돼 다음 실행에도 유지된다.
+  function applyViewMode(mode) {
+    const stella = mode === 'stellarium';
+    const content = $('.content');
+    const view = $('#stellariumView');
+    if (content) content.hidden = stella;
+    if (view) view.hidden = !stella;
+    document.querySelectorAll('.vt-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === mode));
+  }
+  function wireStellariumWebview() {
+    const wv = $('#stellariumWebview');
+    if (!wv || wv._wired) return;
+    wv._wired = true;
+    const loading = $('#stellariumLoading');
+    const errEl = $('#stellariumError');
+    wv.addEventListener('did-start-loading', () => { if (loading) loading.hidden = false; if (errEl) errEl.hidden = true; });
+    wv.addEventListener('did-stop-loading', () => { if (loading) loading.hidden = true; });
+    wv.addEventListener('did-fail-load', (e) => {
+      if (e.errorCode === -3) return; // ABORTED(하위 리소스/취소) 무시
+      if (loading) loading.hidden = true;
+      if (errEl) { errEl.hidden = false; errEl.innerHTML = errorBoxHtml(T('sched.error'), e.errorDescription || ''); }
+    });
+  }
+  async function stellariumUrl(path) {
+    let base = 'https://stellarium.kr';
+    try { base = (await api.getWebHomeUrl()).replace(/\/$/, ''); } catch { /* 기본값 */ }
+    return base + (path || '/');
+  }
+  // path 를 주면 그 페이지로 이동, 없으면 처음 한 번만 홈 로드(토글용). 그 뒤 스텔라리움 화면으로 전환.
+  async function showStellarium(path) {
+    const wv = $('#stellariumWebview');
+    if (wv) {
+      wireStellariumWebview();
+      if (path != null) { wv.src = await stellariumUrl(path); wv._loaded = true; }
+      else if (!wv._loaded) { wv.src = await stellariumUrl('/'); wv._loaded = true; }
+    }
+    applyViewMode('stellarium');
+  }
+  function setViewMode(mode) {
+    if (mode === 'stellarium') showStellarium();
+    else applyViewMode('status');
+    api.setSettings({ viewMode: mode }).then((s) => (state.settings = s)).catch(() => { /* 저장 실패해도 화면은 전환됨 */ });
+  }
+  // 멤버를 앱 안 스텔라리움의 그 멤버 페이지(/stella/<slug>)로 연다 — 기존 기능과 스텔라리움 연결.
+  function openStellariumMember(slug) {
+    if (!slug) return;
+    showStellarium('/stella/' + encodeURIComponent(slug));
+    api.setSettings({ viewMode: 'stellarium' }).then((s) => (state.settings = s)).catch(() => {});
+  }
+  function wireViewToggle() {
+    document.querySelectorAll('.vt-btn').forEach((b) => b.addEventListener('click', () => {
+      const mode = b.dataset.view;
+      if ((state.settings.viewMode || 'status') === mode) return;
+      setViewMode(mode);
+    }));
   }
 
   // 월 이동: 켜놓은 오른쪽 세부 패널은 그대로 유지한다(원래 선택한 날의 일정을 계속 보여줌).
@@ -1915,12 +1984,16 @@
     wireSchedDetail();
     wireCalendar();
     wireSurvey();
+    wireViewToggle();
     wireWhatsNew();
 
     state.settings = await api.getSettings();
     // 저장된 언어로 정적 텍스트 번역 적용(첫 렌더 전에)
     I18N.setLang(state.settings.language || 'ko');
     I18N.apply(document);
+    // 저장된 화면 모드 적용(기본: 기존 스텔라상태 UI). 스텔라리움이면 홈을 로드한다.
+    if ((state.settings.viewMode || 'status') === 'stellarium') showStellarium();
+    else applyViewMode('status');
     state.members = (await api.getMembers()) || [];
     state.thumbStamp = Date.now();
     render();

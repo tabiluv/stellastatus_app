@@ -51,6 +51,19 @@ body {
 .tb-drag { flex: 1; height: 100%; }
 .tb-left, .tb-right { display: flex; align-items: center; gap: 6px; -webkit-app-region: no-drag; }
 .brand { display: flex; align-items: center; gap: 8px; }
+
+/* 스텔라상태 ↔ 스텔라리움 화면 전환 토글 */
+.view-toggle { -webkit-app-region: no-drag; display: inline-flex; margin-left: 14px; padding: 3px; gap: 2px;
+  background: rgba(255,255,255,.06); border: 1px solid var(--panel-brd); border-radius: 999px; }
+.vt-btn { -webkit-app-region: no-drag; cursor: pointer; border: none; background: transparent; color: var(--text-mute);
+  font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 999px; transition: background .14s, color .14s; white-space: nowrap; }
+.vt-btn:hover { color: var(--text-dim); }
+.vt-btn.active { background: var(--accent, #8a7ffb); color: var(--accent-ink, #fff); }
+
+/* 스텔라리움 임베드 화면 — 타이틀바 아래 전체를 채운다 */
+.stellarium-view { height: calc(100vh - var(--tb-h)); position: relative; background: var(--bg); }
+.stellarium-view[hidden] { display: none; }
+.stellarium-webview { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
 .brand-logo { width: 22px; height: 22px; object-fit: contain; }
 .brand-name { font-size: 14.5px; letter-spacing: .2px; color: var(--text); }
 .brand-name b { color: var(--accent-ink); font-weight: 700; }
@@ -246,6 +259,9 @@ body {
 .avatar.star-mark { padding: 9px; }
 .m-names { min-width: 0; flex: 1; }
 .m-name { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+/* 이름 클릭 → 앱 안 스텔라리움 멤버 페이지 */
+.m-names.to-stella { cursor: pointer; border-radius: 6px; }
+.m-names.to-stella:hover .m-name { text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1.5px; text-decoration-color: color-mix(in srgb, var(--accent, #8a7ffb) 70%, transparent); }
 .gen-chip { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 6px; color: var(--text); background: rgba(255,255,255,.08); letter-spacing: .3px; }
 .m-eng { font-size: 11px; color: var(--text-mute); margin-top: 2px; }
 

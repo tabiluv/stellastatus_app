@@ -1,5 +1,5 @@
 const { EventEmitter } = require('events');
-const { profileFor, orderFor } = require('./roster');
+const { profileFor, orderFor, KEY_ALIAS } = require('./roster');
 
 const CHZZK_PUBLIC = 'https://api.chzzk.naver.com';
 const MIN_INTERVAL_SEC = 30;
@@ -70,6 +70,8 @@ class Poller extends EventEmitter {
     const avatar = status.channel?.imageUrl || this._avatarCache.get(meta.id) || null;
     return {
       key: meta.key,
+      // 스텔라리움 웹 멤버 슬러그(= 프로필 키). 라이브러리 key 가 다르면(sakihane-fuya) 별칭으로 맞춘다.
+      slug: KEY_ALIAS[meta.key] || meta.key,
       id: meta.id,
       name: meta.name,
       nameEng: p.nameEng,

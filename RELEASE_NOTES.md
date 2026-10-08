@@ -1,17 +1,15 @@
 <!-- i18n:ko -->
-## 스텔라상태 v1.0.7
+## 스텔라상태 v1.0.8
 
-> v1.0.6 이후의 변경 사항을 담은 **정식(안정) 버전** 입니다.
+> v1.0.7 이후의 변경 사항을 담은 **정식(안정) 버전** 입니다.
 > 사용 중 이상이 있으면 설정 → 정보 → **문제 신고** 로 알려주세요.
 
 스텔라상태를 이용해주시는 분들께 진심으로 감사드립니다.
 
 # 수정된 내용
-- **스텔라상태 · 스텔라리움 통합 설문** — 두 서비스의 통합안에 대한 설문을 추가했습니다.
-- **스텔라리움 웹 캘린더 변경** — 이제 캘린더가 스텔라리움 캘린더를 이용합니다.
-- **오늘의 뱅온 표시 개선** — 방송 중이 아닌 멤버의 새벽·이월 일정을 숨기지 않고 그대로 보여줍니다. (이월 처리는 지금 방송 중인 멤버에게만 적용)
-- **와이파이 재연결 시 알림 중복 수정** — 인터넷이 끊겼다 다시 연결될 때, 이미 방송 중이던 멤버의 알림과 브라우저 자동 열기가 다시 발동하던 문제를 고쳤습니다.
-- **오류 메시지 복사** — 오류가 나면 그 내용을 그대로 선택·복사해 신고할 수 있게 했습니다.
+- **스텔라리움 통합** — 상단 토글로 기존 **스텔라상태** 화면과 **스텔라리움** 을 오갈 수 있습니다. 시작 시에는 기존 화면이 그대로 보입니다.
+- **멤버 → 스텔라리움 페이지** — 멤버 이름을 누르면 해당 스텔라의 스텔라리움 페이지가 앱 안에서 열립니다.
+- **앱 전용 알림 설정** — 스텔라리움 설정 페이지에서 앱의 방송 알림과 브라우저 자동 열기 설정을 직접 관리할 수 있습니다. 앱의 기존 설정과 같은 값을 공유합니다.
 
 ### 설치 방법
 **Windows**
@@ -29,19 +27,17 @@
 - **macOS** — macOS 12 (Monterey) 이상
 
 <!-- i18n:en -->
-## StellaStatus v1.0.7
+## StellaStatus v1.0.8
 
-> This is the **stable release** with the changes made since v1.0.6.
+> This is the **stable release** with the changes made since v1.0.7.
 > If something looks off, please report it via Settings → About → Report a problem.
 
 Thank you so much for using StellaStatus.
 
 # What's changed
-- **StellaStatus · Stellarium merge survey** — added a survey on the plan to merge the two services.
-- **Switched to the Stellarium web calendar** — the calendar now uses the Stellarium calendar.
-- **Better “Today’s schedule”** — dawn/carried-over entries for members who aren’t live are no longer hidden; they show as usual. (Carry-over now applies only to members who are currently live.)
-- **Fixed duplicate alerts on Wi-Fi reconnect** — notifications and browser auto-open no longer fire again for members who were already live when the connection drops and comes back.
-- **Copyable error messages** — when an error occurs, you can select and copy its text to report it.
+- **Stellarium integration** — a toggle at the top lets you switch between the existing **StellaStatus** view and **Stellarium**. The app still opens on the existing view by default.
+- **Member → Stellarium page** — tap a member's name to open that Stella's Stellarium page right inside the app.
+- **App-only notification settings** — manage the app's live alerts and browser auto-open from the Stellarium settings page. It shares the same values as the app's existing settings.
 
 ### How to install
 **Windows**
@@ -59,19 +55,17 @@ Thank you so much for using StellaStatus.
 - **macOS** — macOS 12 (Monterey) or later
 
 <!-- i18n:ja -->
-## StellaStatus v1.0.7
+## StellaStatus v1.0.8
 
-> v1.0.6 以降の変更を含む **正式（安定）版** です。
+> v1.0.7 以降の変更を含む **正式（安定）版** です。
 > 不具合があれば、設定 → 情報 → 問題を報告 からお知らせください。
 
 StellaStatus をご利用いただきありがとうございます。
 
 # 変更内容
-- **StellaStatus・Stellarium統合アンケート** — 2つのサービスの統合案についてのアンケートを追加しました。
-- **Stellariumのウェブカレンダーに変更** — カレンダーがStellariumのカレンダーを利用するようになりました。
-- **「今日の配信予定」の表示改善** — 配信中でないメンバーの深夜・繰り越しの予定を隠さず、そのまま表示します。（繰り越し処理は現在配信中のメンバーにのみ適用）
-- **Wi-Fi 再接続時の通知重複を修正** — インターネットが切断・再接続したとき、すでに配信中だったメンバーの通知やブラウザ自動起動が再び発動する問題を修正しました。
-- **エラーメッセージのコピー** — エラー時にその内容をそのまま選択・コピーして報告できるようにしました。
+- **Stellarium 統合** — 画面上部のトグルで、これまでの **StellaStatus** 画面と **Stellarium** を切り替えられます。起動時はこれまでの画面がそのまま表示されます。
+- **メンバー → Stellarium ページ** — メンバー名をタップすると、そのステラの Stellarium ページがアプリ内で開きます。
+- **アプリ専用の通知設定** — Stellarium の設定ページから、アプリの配信通知とブラウザ自動起動の設定を直接管理できます。アプリの既存設定と同じ値を共有します。
 
 ### インストール方法
 **Windows**

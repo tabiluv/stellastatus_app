@@ -55,6 +55,8 @@ const store = new Store({
     windowBounds: { width: 1180, height: 780 },
     // '이번 버전에서 바뀐 점'을 마지막으로 보여준 버전. 업데이트 후 첫 실행 때 딱 1번만 안내하는 데 쓴다.
     lastShownVersion: null,
+    // 기본 화면: 'status'(기존 스텔라상태 UI) | 'stellarium'(스텔라리움 통합 홈). 서비스 초기 기본은 기존 UI.
+    viewMode: 'status',
   },
 });
 

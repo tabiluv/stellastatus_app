@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('stella', {
   // 외부 링크 / 창 제어
   openExternal: (url) => ipcRenderer.invoke('open:external', url),
   getWebCalUrl: () => ipcRenderer.invoke('app:webCalUrl'),
+  getWebHomeUrl: () => ipcRenderer.invoke('app:webHomeUrl'),
 
   // 통합 설문
   getSurveyUrl: () => ipcRenderer.invoke('survey:url'),

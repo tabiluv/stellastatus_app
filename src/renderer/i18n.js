@@ -15,6 +15,7 @@
       'lang.name': '한국어',
       // 타이틀바
       'brand.name': '스텔라<b>상태</b>',
+      'view.status': '스텔라상태', 'view.stellarium': '스텔라리움',
       'tb.refresh': '새로고침', 'tb.settings': '설정',
       'tb.min': '최소화', 'tb.max': '최대화', 'tb.close': '닫기',
       // 히어로
@@ -36,7 +37,7 @@
       'card.go': '라이브 바로가기',
       'card.wait': '방송 대기중',
       'up.just': '방금 시작', 'up.hm': '{h}시간 {m}분째', 'up.m': '{m}분째',
-      'card.channel': '채널', 'card.social': '링크 보기',
+      'card.channel': '채널', 'card.social': '링크 보기', 'card.toStella': '스텔라리움에서 보기',
       'card.pin': '상단 고정', 'card.unpin': '고정 해제',
       // 스케줄(뱅온)
       'sched.title': '오늘의 뱅온',
@@ -120,6 +121,7 @@
     en: {
       'lang.name': 'English',
       'brand.name': 'Stella<b>Status</b>',
+      'view.status': 'StellaStatus', 'view.stellarium': 'Stellarium',
       'tb.refresh': 'Refresh', 'tb.settings': 'Settings',
       'tb.min': 'Minimize', 'tb.max': 'Maximize', 'tb.close': 'Close',
       'hero.eyebrow': 'STELLA STATUS · StelLive stream notifier',
@@ -138,7 +140,7 @@
       'card.go': 'Watch live',
       'card.wait': 'Offline',
       'up.just': 'Just started', 'up.hm': '{h}h {m}m', 'up.m': '{m}m',
-      'card.channel': 'Channel', 'card.social': 'Links',
+      'card.channel': 'Channel', 'card.social': 'Links', 'card.toStella': 'View on Stellarium',
       'card.pin': 'Pin to top', 'card.unpin': 'Unpin',
       'sched.title': 'Today’s Schedule',
       'sched.loading': 'Loading schedule…',
@@ -213,6 +215,7 @@
     ja: {
       'lang.name': '日本語',
       'brand.name': 'Stella<b>Status</b>',
+      'view.status': 'StellaStatus', 'view.stellarium': 'Stellarium',
       'tb.refresh': '更新', 'tb.settings': '設定',
       'tb.min': '最小化', 'tb.max': '最大化', 'tb.close': '閉じる',
       'hero.eyebrow': 'STELLA STATUS · ステラライブ配信通知',
@@ -231,7 +234,7 @@
       'card.go': 'ライブを見る',
       'card.wait': '配信待機中',
       'up.just': '開始したばかり', 'up.hm': '{h}時間{m}分経過', 'up.m': '{m}分経過',
-      'card.channel': 'チャンネル', 'card.social': 'リンク',
+      'card.channel': 'チャンネル', 'card.social': 'リンク', 'card.toStella': 'Stellarium で見る',
       'card.pin': '上部に固定', 'card.unpin': '固定を解除',
       'sched.title': '今日の配信予定',
       'sched.loading': 'スケジュールを読み込み中…',

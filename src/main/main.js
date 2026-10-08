@@ -30,6 +30,9 @@ const APP_ID = 'com.stellastatus.app';
 const ICON_PATH = path.join(app.getAppPath(), 'build', 'icon.png');
 const isDev = process.argv.includes('--dev') || !app.isPackaged;
 
+// web(스텔라리움) 기준 주소 — 개발은 로컬 web 서버, 배포는 stellarium.kr.
+const webBase = () => process.env.STELLA_WEB_BASE || (isDev ? 'http://localhost:3000' : 'https://stellarium.kr');
+
 let mainWindow = null;
 let tray = null;
 let isQuitting = false;
@@ -82,6 +85,14 @@ function createWindow() {
       // 캘린더는 web(stellarium.kr/calendar)을 <webview> 로 임베드해 쓴다.
       webviewTag: true,
     },
+  });
+
+  // 임베드 webview(스텔라리움·캘린더·설문)에 브리지 preload 를 주입한다.
+  //  웹이 window.stellaApp 로 앱 네이티브 설정을 읽고 쓸 수 있게 한다(노출은 우리 도메인에서만).
+  mainWindow.webContents.on('will-attach-webview', (_e, webPreferences) => {
+    webPreferences.preload = path.join(__dirname, 'webview-preload.js');
+    webPreferences.nodeIntegration = false;
+    webPreferences.contextIsolation = true;
   });
 
   mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
@@ -363,10 +374,10 @@ function registerIpc() {
     if (typeof url === 'string' && /^(https?:\/\/|mailto:)/.test(url)) shell.openExternal(url);
   });
 
-  // web(stellarium.kr) 기준 주소 — 개발 모드는 로컬 web 서버, 배포는 stellarium.kr.
-  // (환경변수 STELLA_WEB_BASE 로 재정의 가능)
-  const webBase = () => process.env.STELLA_WEB_BASE || (isDev ? 'http://localhost:3000' : 'https://stellarium.kr');
+  // web(stellarium.kr) 임베드 주소들. (기준 주소 webBase 는 모듈 상단에 정의)
   ipcMain.handle('app:webCalUrl', () => process.env.STELLA_WEB_CAL_URL || `${webBase()}/calendar`);
+  // 스텔라리움(통합) 화면으로 임베드할 홈 주소.
+  ipcMain.handle('app:webHomeUrl', () => `${webBase()}/`);
 
   // 통합 설문 — webview 로 web /survey 를 띄운다. `?embed=1` 은 "앱 임베드"라는 신호로,
   // web 이 이걸 보면 사이트 헤더/푸터 없이 전체 화면으로 그린다. **중복 방지를 위해 이제

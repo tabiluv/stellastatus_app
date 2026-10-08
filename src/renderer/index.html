@@ -21,6 +21,11 @@
         <img class="brand-logo" src="assets/logo.png" alt="" />
         <span class="brand-name" data-i18n-html="brand.name">스텔라<b>상태</b></span>
       </div>
+      <!-- 기존 스텔라상태 화면 ↔ 스텔라리움(통합) 화면 전환 -->
+      <div class="view-toggle" id="viewToggle" role="tablist">
+        <button class="vt-btn active" data-view="status" data-i18n="view.status">스텔라상태</button>
+        <button class="vt-btn" data-view="stellarium" data-i18n="view.stellarium">스텔라리움</button>
+      </div>
     </div>
     <div class="tb-drag"></div>
     <div class="tb-right">
@@ -32,6 +37,13 @@
       <button class="win-btn win-close" id="winClose" data-i18n-title="tb.close" title="닫기"></button>
     </div>
   </header>
+
+  <!-- 스텔라리움(통합) 화면 — stellarium.kr 홈을 webview 로 앱 안에 임베드 -->
+  <div class="stellarium-view" id="stellariumView" hidden>
+    <webview id="stellariumWebview" class="stellarium-webview" src="about:blank"></webview>
+    <div class="cal-embed-state" id="stellariumLoading"><span class="cl-spinner"></span></div>
+    <div class="cal-embed-state" id="stellariumError" hidden></div>
+  </div>
 
   <main class="content">
     <!-- 히어로 -->
