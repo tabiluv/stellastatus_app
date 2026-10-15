@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'" />
-  <title>스텔라상태</title>
+  <title>스텔라리움</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -14,24 +14,10 @@
   <!-- 인앱 알림(플로팅 토스트) -->
   <div class="toast-host" id="toasts"></div>
 
-  <!-- 커스텀 타이틀바 -->
+  <!-- 바 없는 투명 타이틀바 — 창 제어만(맥: 신호등 / 윈도우: 닫기·최소화). 설정은 트레이로. -->
   <header class="titlebar">
-    <div class="tb-left">
-      <div class="brand">
-        <img class="brand-logo" src="assets/logo.png" alt="" />
-        <span class="brand-name" data-i18n-html="brand.name">스텔라<b>상태</b></span>
-      </div>
-      <!-- 기존 스텔라상태 화면 ↔ 스텔라리움(통합) 화면 전환 -->
-      <div class="view-toggle" id="viewToggle" role="tablist">
-        <button class="vt-btn active" data-view="status" data-i18n="view.status">스텔라상태</button>
-        <button class="vt-btn" data-view="stellarium" data-i18n="view.stellarium">스텔라리움</button>
-      </div>
-    </div>
     <div class="tb-drag"></div>
     <div class="tb-right">
-      <button class="icon-btn" id="btnRefresh" data-i18n-title="tb.refresh" title="새로고침"></button>
-      <button class="icon-btn" id="btnSettings" data-i18n-title="tb.settings" title="설정"></button>
-      <span class="tb-sep"></span>
       <button class="win-btn" id="winMin" data-i18n-title="tb.min" title="최소화"></button>
       <button class="win-btn" id="winMax" data-i18n-title="tb.max" title="최대화"></button>
       <button class="win-btn win-close" id="winClose" data-i18n-title="tb.close" title="닫기"></button>
@@ -49,7 +35,7 @@
     <!-- 히어로 -->
     <section class="hero">
       <div>
-        <p class="hero-eyebrow" data-i18n="hero.eyebrow">STELLA STATUS · 스텔라이브 방송 알리미</p>
+        <p class="hero-eyebrow" data-i18n="hero.eyebrow">STELLARIUM · 스텔라이브 방송 알리미</p>
         <h1 class="hero-title" id="heroTitle" data-i18n-html="hero.title">지금, 어떤 <b>스텔라</b>를 만나볼까요?</h1>
       </div>
       <div class="live-summary" id="liveSummary">
@@ -108,16 +94,15 @@
       <button class="icon-btn settings-close" id="closeSettings"></button>
       <aside class="settings-nav">
         <div class="settings-nav-head" data-i18n="settings.title">설정</div>
-        <button class="nav-item active" data-tab="general"><span class="ni-ico" data-icon="sliders"></span><span data-i18n="nav.general">일반</span></button>
-        <button class="nav-item" data-tab="notify"><span class="ni-ico" data-icon="bell"></span><span data-i18n="nav.notify">알림</span></button>
-        <button class="nav-item" data-tab="info"><span class="ni-ico" data-icon="info"></span><span data-i18n="nav.info">정보</span></button>
+        <!-- 일반·알림 설정은 스텔라리움 웹(/setting)의 '앱 전용' 섹션으로 옮겼다. 여기선 정보만. -->
+        <button class="nav-item active" data-tab="info"><span class="ni-ico" data-icon="info"></span><span data-i18n="nav.info">정보</span></button>
         <button class="nav-item nav-contact" id="btnContact"><span class="ni-ico" data-icon="mail"></span><span data-i18n="nav.contact">문의하기</span></button>
       </aside>
 
       <div class="settings-main">
 
-        <!-- 일반 -->
-        <section class="tab-panel" data-panel="general">
+        <!-- 일반 (웹 /setting 으로 이동 — UI 에선 숨김, 값 동기화용으로 DOM 은 유지) -->
+        <section class="tab-panel" data-panel="general" hidden>
           <div class="setting-row">
             <div><div class="s-title" data-i18n="set.language.t">언어 (Language)</div><div class="s-desc" data-i18n="set.language.d">앱 화면에 표시되는 언어를 선택합니다.</div></div>
             <select id="setLanguage">
@@ -150,6 +135,10 @@
           <div class="setting-row">
             <div><div class="s-title" data-i18n="set.beta.t">베타 버전 받기</div><div class="s-desc" data-i18n="set.beta.d">정식 출시 전 베타(시험판)를 우선으로 받아 설치합니다.</div></div>
             <label class="switch"><input type="checkbox" id="setBeta"><span></span></label>
+          </div>
+          <div class="setting-row">
+            <div><div class="s-title" data-i18n="set.discord.t">디스코드에 표시</div><div class="s-desc" data-i18n="set.discord.d">디스코드에 지금 스텔라리움에서 무엇을 보는 중인지 표시합니다.</div></div>
+            <label class="switch"><input type="checkbox" id="setDiscord"><span></span></label>
           </div>
         </section>
 
@@ -185,10 +174,10 @@
         </section>
 
         <!-- 정보 -->
-        <section class="tab-panel" data-panel="info" hidden>
+        <section class="tab-panel" data-panel="info">
           <div class="about">
             <img class="about-logo" src="assets/logo.png" alt="" />
-            <div class="about-name" data-i18n-html="brand.name">스텔라<b>상태</b></div>
+            <div class="about-name" data-i18n-html="brand.name">스텔라<b>리움</b></div>
             <div class="about-ver"><span data-i18n="about.ver">버전</span> <span id="appVersion">–</span></div>
             <div class="about-made" data-i18n="about.made">Made by 스텔라리움</div>
             <div class="about-btns">
@@ -251,7 +240,7 @@
 
           <div class="section-label" data-i18n="label.appManage">앱 관리</div>
           <div class="setting-row">
-            <div><div class="s-title" data-i18n="uninstall.t">스텔라상태 제거</div><div class="s-desc" data-i18n="uninstall.d">이 컴퓨터에서 앱과 바로가기를 삭제합니다.</div></div>
+            <div><div class="s-title" data-i18n="uninstall.t">스텔라리움 제거</div><div class="s-desc" data-i18n="uninstall.d">이 컴퓨터에서 앱과 바로가기를 삭제합니다.</div></div>
             <button class="mini-btn danger" id="btnUninstall" data-i18n="uninstall.btn">제거</button>
           </div>
         </section>

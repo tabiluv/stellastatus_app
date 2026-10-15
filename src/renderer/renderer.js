@@ -1,4 +1,4 @@
-/* 스텔라상태 — 렌더러 UI 로직 */
+/* 스텔라리움 — 렌더러 UI 로직 */
 (() => {
   const api = window.stella;
   const I18N = window.I18N;
@@ -1022,7 +1022,7 @@
     $('#surveyModal').addEventListener('click', (e) => { if (e.target.id === 'surveyModal') { closeModalEl('#surveyModal'); updateSurveyBanner(); } });
   }
 
-  // ── 화면 전환: 스텔라상태(기존 UI) ↔ 스텔라리움(통합 홈/멤버 페이지를 webview 로) ──────
+  // ── 화면 전환: 방송 상태(기존 UI) ↔ 스텔라리움(통합 홈/멤버 페이지를 webview 로) ──────
   // 서비스 초기 기본은 'status'(기존 UI). 선택은 설정에 저장돼 다음 실행에도 유지된다.
   function applyViewMode(mode) {
     const stella = mode === 'stellarium';
@@ -1038,8 +1038,10 @@
     wv._wired = true;
     const loading = $('#stellariumLoading');
     const errEl = $('#stellariumError');
-    wv.addEventListener('did-start-loading', () => { if (loading) loading.hidden = false; if (errEl) errEl.hidden = true; });
-    wv.addEventListener('did-stop-loading', () => { if (loading) loading.hidden = true; });
+    // 로딩 오버레이는 '첫 로드'에만 보여준다. 그 뒤 페이지 이동마다 전체 스피너가 깜빡이면
+    // 화면이 끊겨 보이므로, 한 번 떠본 뒤로는 오버레이를 띄우지 않는다(webview 가 이전 화면을 유지).
+    wv.addEventListener('did-start-loading', () => { if (loading && !wv._everLoaded) loading.hidden = false; if (errEl) errEl.hidden = true; });
+    wv.addEventListener('did-stop-loading', () => { wv._everLoaded = true; if (loading) loading.hidden = true; });
     wv.addEventListener('did-fail-load', (e) => {
       if (e.errorCode === -3) return; // ABORTED(하위 리소스/취소) 무시
       if (loading) loading.hidden = true;
@@ -1425,6 +1427,7 @@
     $('#setTray').checked = s.minimizeToTray !== false;
     $('#setStartup').checked = !!s.launchAtStartup;
     $('#setBeta').checked = !!s.betaChannel;
+    $('#setDiscord').checked = s.discordRpc !== false;
     $('#setInterval').value = String(s.pollIntervalSec || 60);
     $('#setLanguage').value = I18N.normalize(s.language) || 'ko';
     buildMemberList('#subList', s.subscribed, saveSubscriptions);
@@ -1472,7 +1475,7 @@
 
   function openSettings() {
     fillSettings();
-    switchTab('general');
+    switchTab('info'); // 일반·알림은 웹 /setting 으로 이동 — 네이티브는 정보만 연다
     const m = $('#settingsModal');
     m.hidden = false;
     void m.offsetHeight; // 리플로우 후 열기 애니메이션
@@ -1505,7 +1508,10 @@
   }
 
   function wireSettings() {
-    $('#btnSettings').addEventListener('click', openSettings);
+    // 설정 진입은 트레이 메뉴에서 — 메인이 보내는 신호로 모달을 연다(타이틀바 ⚙️ 제거됨).
+    if (api.onOpenSettings) api.onOpenSettings(() => openSettings());
+    // 트레이 '업데이트 확인' — 정보 모달을 열고 btnCheckUpdate 와 같은 수동 체크를 돈다.
+    if (api.onCheckUpdate) api.onCheckUpdate(() => { openSettings(); state.manualUpdateCheck = true; api.checkUpdate(); });
     $('#setLanguage').addEventListener('change', (e) => applyLanguage(e.target.value));
     $('#closeSettings').addEventListener('click', closeSettings);
     $('#settingsModal').addEventListener('click', (e) => { if (e.target.id === 'settingsModal') closeSettings(); });
@@ -1533,6 +1539,7 @@
     $('#setThumbs').addEventListener('change', (e) => { save({ showThumbnails: e.target.checked }); render(); });
     $('#setTray').addEventListener('change', (e) => save({ minimizeToTray: e.target.checked }));
     $('#setStartup').addEventListener('change', (e) => save({ launchAtStartup: e.target.checked }));
+    $('#setDiscord').addEventListener('change', (e) => save({ discordRpc: e.target.checked }));
     // 베타 채널 토글: 저장 후 곧바로 업데이트를 다시 확인해 새 채널 기준(정식/베타) 최신 버전을 안내한다.
     $('#setBeta').addEventListener('change', async (e) => {
       await save({ betaChannel: e.target.checked });
@@ -1766,7 +1773,7 @@
   // ── 문의하기(이메일 · GitHub 이슈 · X) ────────
   function wireContact() {
     const CONTACT = {
-      email: 'mailto:contact@stellarium.kr?subject=' + encodeURIComponent('[스텔라상태] 문의'),
+      email: 'mailto:contact@stellarium.kr?subject=' + encodeURIComponent('[스텔라리움] 문의'),
       github: 'https://github.com/tabiluv/stellastatus_app/issues/new',
       x: 'https://x.com/tabi_1uv',
     };
@@ -1827,8 +1834,8 @@
   }
   // 이용약관 본문(언어별). 방송/데이터 관련 사실 관계는 동일하게 유지.
   const TERMS = {
-    ko: `<p class="t-h">스텔라상태 이용약관</p>
-<p><b>제1조 (목적 및 동의)</b><br>본 약관은 스텔라상태(이하 "앱")의 설치와 사용에 관한 조건을 정합니다. 이용자가 앱을 설치·실행함으로써 본 약관에 동의한 것으로 봅니다.</p>
+    ko: `<p class="t-h">스텔라리움 이용약관</p>
+<p><b>제1조 (목적 및 동의)</b><br>본 약관은 스텔라리움(이하 "앱")의 설치와 사용에 관한 조건을 정합니다. 이용자가 앱을 설치·실행함으로써 본 약관에 동의한 것으로 봅니다.</p>
 <p><b>제2조 (라이선스)</b><br>앱은 MIT 라이선스로 제공되며, 개인적·비상업적 용도로 자유롭게 사용·복제·배포할 수 있습니다.</p>
 <p><b>제3조 (사용 라이브러리 및 데이터)</b><br>앱은 오픈소스 라이브러리 stellastatus를 사용하여 방송 상태와 방송 스케줄(뱅온) 정보를 조회합니다. 해당 라이브러리는 치지직(CHZZK)의 방송 상태와 StelLight의 스케줄 등 공개 데이터를 기반으로 동작하며, 라이브러리 또는 원 서비스의 정책·구조 변경에 따라 일부 기능이 제한되거나 중단될 수 있습니다.</p>
 <p><b>제4조 (비공식 고지)</b><br>본 앱은 스텔라이브 및 관련 서비스의 공식 제작물이 아닌, 팬이 제작한 비공식 도구입니다.</p>
@@ -1837,8 +1844,8 @@
 <p><b>제7조 (자동 업데이트)</b><br>앱은 최신 버전 확인 및 업데이트 파일 다운로드를 위해 배포처(GitHub)에 접속할 수 있습니다.</p>
 <p><b>제8조 (금지 행위)</b><br>데이터 출처 서버에 과도한 부하를 유발하는 개조·자동화·대량 요청 등의 행위를 금합니다.</p>
 <p><b>제9조 (약관의 변경)</b><br>본 약관은 앱의 업데이트와 함께 변경될 수 있으며, 변경된 약관은 앱 내 정보 화면 또는 배포처를 통해 고지됩니다.</p>`,
-    en: `<p class="t-h">StellaStatus Terms of Use</p>
-<p><b>Article 1 (Purpose & Consent)</b><br>These terms govern the installation and use of StellaStatus (the "App"). By installing and running the App, you agree to these terms.</p>
+    en: `<p class="t-h">Stellarium Terms of Use</p>
+<p><b>Article 1 (Purpose & Consent)</b><br>These terms govern the installation and use of Stellarium (the "App"). By installing and running the App, you agree to these terms.</p>
 <p><b>Article 2 (License)</b><br>The App is provided under the MIT License and may be freely used, copied, and distributed for personal, non-commercial purposes.</p>
 <p><b>Article 3 (Libraries & Data)</b><br>The App uses the open-source library stellastatus to query stream status and schedule (bang-on) information. That library relies on public data such as CHZZK stream status and StelLight schedules; some features may be limited or stop working if those services change their policy or structure.</p>
 <p><b>Article 4 (Unofficial Notice)</b><br>This App is an unofficial, fan-made tool and is not an official product of StelLive or related services.</p>
@@ -1847,8 +1854,8 @@
 <p><b>Article 7 (Auto-update)</b><br>The App may connect to its distribution host (GitHub) to check for the latest version and download update files.</p>
 <p><b>Article 8 (Prohibited Acts)</b><br>Modification, automation, or bulk requests that place excessive load on the data-source servers are prohibited.</p>
 <p><b>Article 9 (Changes)</b><br>These terms may change with app updates; the revised terms are announced in the App's About screen or on the distribution host.</p>`,
-    ja: `<p class="t-h">StellaStatus 利用規約</p>
-<p><b>第1条 (目的および同意)</b><br>本規約は StellaStatus(以下「アプリ」)のインストールおよび使用条件を定めます。アプリをインストール・実行することで本規約に同意したものとみなします。</p>
+    ja: `<p class="t-h">Stellarium 利用規約</p>
+<p><b>第1条 (目的および同意)</b><br>本規約は Stellarium(以下「アプリ」)のインストールおよび使用条件を定めます。アプリをインストール・実行することで本規約に同意したものとみなします。</p>
 <p><b>第2条 (ライセンス)</b><br>アプリは MIT ライセンスで提供され、個人的・非商用目的で自由に使用・複製・配布できます。</p>
 <p><b>第3条 (使用ライブラリおよびデータ)</b><br>アプリはオープンソースライブラリ stellastatus を使用して配信状態と配信スケジュールを取得します。当該ライブラリは CHZZK の配信状態や StelLight のスケジュールなど公開データに基づいて動作し、ライブラリまたは元サービスの方針・構造の変更により一部機能が制限・停止する場合があります。</p>
 <p><b>第4条 (非公式の告知)</b><br>本アプリはステラライブおよび関連サービスの公式制作物ではなく、ファンが制作した非公式ツールです。</p>
@@ -1935,8 +1942,8 @@
     let t;
     $('#searchInput').addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => { state.search = e.target.value.trim(); render(true); }, 120); });
 
-    const refreshBtn = $('#btnRefresh');
-    refreshBtn.addEventListener('click', async () => { refreshBtn.querySelector('svg')?.classList.add('spin'); await api.refresh(); });
+    const refreshBtn = $('#btnRefresh'); // 타이틀바에서 제거됨(스텔라리움 전용). 남아 있을 때만 연결.
+    if (refreshBtn) refreshBtn.addEventListener('click', async () => { refreshBtn.querySelector('svg')?.classList.add('spin'); await api.refresh(); });
 
     // 멤버는 세로 스크롤 그리드, 스케줄만 가로 스크롤(휠/드래그)
     attachHScroll($('#schedStrip'));
@@ -1947,8 +1954,6 @@
     $('#winClose').addEventListener('click', () => api.close());
   }
   function installIcons() {
-    setIcon('#btnRefresh', 'refresh', 16);
-    setIcon('#btnSettings', 'settings', 16);
     setIcon('#searchIcon', 'search', 16);
     setIcon('#winMin', 'minus', 14);
     setIcon('#winMax', 'square', 13);
@@ -1984,16 +1989,16 @@
     wireSchedDetail();
     wireCalendar();
     wireSurvey();
-    wireViewToggle();
     wireWhatsNew();
 
     state.settings = await api.getSettings();
     // 저장된 언어로 정적 텍스트 번역 적용(첫 렌더 전에)
     I18N.setLang(state.settings.language || 'ko');
     I18N.apply(document);
-    // 저장된 화면 모드 적용(기본: 기존 스텔라상태 UI). 스텔라리움이면 홈을 로드한다.
-    if ((state.settings.viewMode || 'status') === 'stellarium') showStellarium();
-    else applyViewMode('status');
+    // 앱은 스텔라리움 웹을 메인 화면으로 보여준다(방송 상태 화면은 제거됨 — 토글 없이 항상 스텔라리움).
+    //  숨어 있는 .content 의 폴러·트레이는 그대로 돌아, 로그인 전 네이티브 알림 폴백과
+    //  트레이 라이브 수를 유지한다. 로그인 시엔 웹의 AppNotifyMirror 가 계정 알림을 미러링한다.
+    showStellarium();
     state.members = (await api.getMembers()) || [];
     state.thumbStamp = Date.now();
     render();
@@ -2025,7 +2030,7 @@
       try {
         state.members = members || [];
         state.thumbStamp = Date.now();
-        $('#btnRefresh').querySelector('svg')?.classList.remove('spin');
+        $('#btnRefresh')?.querySelector('svg')?.classList.remove('spin');
         render();
         renderSchedule(); // 라이브 상태 변화 반영(내부에서 변화 있을 때만 다시 그림)
         if (!$('#settingsModal').hidden) {
@@ -2038,7 +2043,7 @@
       }
     });
     api.onPolling((busy) => {
-      const svg = $('#btnRefresh').querySelector('svg');
+      const svg = $('#btnRefresh')?.querySelector('svg');
       if (svg) busy ? svg.classList.add('spin') : svg.classList.remove('spin');
     });
     // 방송 시작 → 인앱 플로팅 알림

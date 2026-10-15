@@ -1,6 +1,6 @@
 appId: com.stellastatus.app
-productName: 스텔라상태
-copyright: Copyright © 2026 StellaStatus
+productName: 스텔라리움
+copyright: Copyright © 2026 Stellarium
 
 # (이전엔 afterPack 훅에서 codesign --deep 로 직접 ad-hoc 서명했으나,
 #  --deep 이 헬퍼 서명을 깨뜨려 AMFI 가 앱을 죽이는 문제가 있었다.
@@ -29,7 +29,7 @@ win:
         - x64
   icon: build/icon.png
   # 실행 파일에 표기될 정보
-  legalTrademarks: StellaStatus
+  legalTrademarks: Stellarium
 
 nsis:
   oneClick: false                 # 설치 도우미(마법사) 표시
@@ -39,7 +39,7 @@ nsis:
   allowElevation: true
   createDesktopShortcut: true     # 바탕화면 바로가기
   createStartMenuShortcut: true   # 시작 메뉴 바로가기
-  shortcutName: 스텔라상태
+  shortcutName: 스텔라리움
   runAfterFinish: true
   deleteAppDataOnUninstall: false
   installerIcon: build/icon.ico
@@ -51,6 +51,27 @@ nsis:
   uninstallerSidebar: build/uninstallerSidebar.bmp
   warningsAsErrors: false
   include: build/installer.nsh
+
+# ── Microsoft Store 패키지(MSIX/appx) ──────────────────────
+# 스토어 배포 전용. 기본 win.target(nsis)에는 없으므로 GitHub 릴리즈 빌드와 무관하다.
+#  빌드:  npm run build-appx      → dist/*.appx (윈도우에서만 빌드 가능)
+#
+# ⚠️ 아래 identityName / publisher / publisherDisplayName 세 값은
+#    파트너 센터에서 앱 이름을 예약한 뒤 "제품 관리 → 제품 ID" 페이지에 표시되는
+#    값으로 반드시 바꿔야 스토어 업로드가 통과한다. (바꾸기 전에는 자체 테스트 서명으로만 빌드됨)
+#  - 스토어에 올리면 Microsoft 가 패키지를 서명하므로, 우리 쪽 코드 서명 인증서는 필요 없다
+#    (= 비서명 exe 의 SmartScreen 경고 문제도 사라진다).
+appx:
+  applicationId: StellaStatus          # 내부 식별자(공백 불가, 문자로 시작) — 변경 불필요
+  identityName: ACCE5C76.2202553C1C9F                    # 파트너 센터 Package/Identity/Name
+  publisher: CN=252BBF40-E325-4669-B72C-F43473A6FECA     # 파트너 센터 Package/Identity/Publisher
+  publisherDisplayName: 정타비사랑해                       # 파트너 센터 PublisherDisplayName
+  backgroundColor: "#0f1020"
+  showNameOnTiles: true
+  languages:
+    - ko-KR
+    - en-US
+    - ja-JP
 
 # ── macOS 설치 파일(.dmg) ──────────────────────────────────
 # 반드시 macOS 러너에서만 빌드된다(로컬 Windows 불가). GitHub Actions 의 build-mac 잡에서 생성.
@@ -78,19 +99,19 @@ mac:
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
   # ⚠️ macOS 에서는 앱/헬퍼/실행파일 이름을 반드시 ASCII 로 만든다.
-  #  - productName 이 한글("스텔라상태")이면 헬퍼가 "스텔라상태 Helper (GPU)" 처럼
+  #  - productName 이 한글("스텔라리움")이면 헬퍼가 "스텔라리움 Helper (GPU)" 처럼
   #    한글 경로가 되는데, 이 경우 앱이 헬퍼를 실행하는 순간 SIGTRAP 으로 크래시한다.
   #  - 그래서 mac.executableName 으로 실행파일을, scripts/build-mac.mjs 의
-  #    productName 오버라이드로 .app/헬퍼 이름을 ASCII("StellaStatus")로 고정한다.
+  #    productName 오버라이드로 .app/헬퍼 이름을 ASCII("Stellarium")로 고정한다.
   #  - 사용자에게 보이는 이름(Finder/독/메뉴막대)은 아래 CFBundleDisplayName 으로 한글 유지.
-  executableName: StellaStatus
+  executableName: Stellarium
   extendInfo:
-    CFBundleDisplayName: 스텔라상태
+    CFBundleDisplayName: 스텔라리움
 
 dmg:
   # 파일명은 ASCII 로 고정한다. (한글이 들어가면 GitHub 업로드 시 이름이 잘려
   #  '-1.0.4-arm64.dmg' 처럼 되므로. 업데이터는 이름의 arm64/x64 로 아키텍처를 고른다.)
-  artifactName: StellaStatus-${version}-${arch}.dmg
+  artifactName: Stellarium-${version}-${arch}.dmg
 
 # ── 자동 업데이트(GitHub Releases) ─────────────────────────
 # 배포 전 owner/repo 를 본인 저장소로 바꾸세요.

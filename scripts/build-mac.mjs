@@ -7,11 +7,11 @@
 //      com.apple.FinderInfo / com.apple.fileprovider 확장 속성을 붙여,
 //      codesign 이 "resource fork ... detritus not allowed" 로 실패한다.
 //
-// 2) productName 을 ASCII("StellaStatus")로 오버라이드한다.
-//    - 한글 productName("스텔라상태")이면 헬퍼 앱이 "스텔라상태 Helper (GPU).app" 처럼
+// 2) productName 을 ASCII("Stellarium")로 오버라이드한다.
+//    - 한글 productName("스텔라리움")이면 헬퍼 앱이 "스텔라리움 Helper (GPU).app" 처럼
 //      한글 경로가 되는데, 이 경우 앱이 헬퍼를 실행하는 순간 SIGTRAP 으로 크래시한다.
 //    - .app/헬퍼/실행파일 이름은 ASCII 로 두고, 사용자에게 보이는 이름은
-//      electron-builder.yml 의 mac.extendInfo.CFBundleDisplayName 으로 한글("스텔라상태")을 유지한다.
+//      electron-builder.yml 의 mac.extendInfo.CFBundleDisplayName 으로 한글("스텔라리움")을 유지한다.
 //    - Windows 빌드는 package.json 의 한글 productName 을 그대로 쓰므로 영향이 없다.
 //
 // 빌드가 끝나면 결과 DMG 를 프로젝트의 dist/ 로 복사한다.
@@ -32,7 +32,7 @@ try {
     [
       'electron-builder',
       '--mac',
-      '-c.productName=StellaStatus',
+      '-c.productName=Stellarium',
       `-c.directories.output=${outDir}`,
     ],
     { cwd: root, stdio: 'inherit' }

@@ -4,7 +4,7 @@
   const T = (k) => I.t(k);
   const $ = (s) => document.querySelector(s);
 
-  const state = { mode: 'install', step: 'welcome', dir: '', exePath: '', appName: '스텔라상태', version: '', lang: 'ko' };
+  const state = { mode: 'install', step: 'welcome', dir: '', exePath: '', appName: '스텔라리움', version: '', lang: 'ko' };
 
   // 아이콘 팩(Lucide, MIT)
   const ICONS = {
@@ -181,7 +181,7 @@
     // 업데이트/제거 모드는 앱이 전달한 언어(--lang)로 맞춘다(설치 마법사 UI 를 앱 언어와 통일).
     if (b.lang) setLanguage(b.lang);
     state.mode = b.mode;
-    state.appName = b.appName || '스텔라상태';
+    state.appName = b.appName || '스텔라리움';
     state.version = b.version || '';
     state.dir = b.defaultDir || '';
     $('#pathInput').value = state.dir;

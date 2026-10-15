@@ -1,4 +1,4 @@
-// 스텔라상태 커스텀 인스톨러 — 설치/제거 핵심 로직 (per-user, 관리자 권한 불필요)
+// 스텔라리움 커스텀 인스톨러 — 설치/제거 핵심 로직 (per-user, 관리자 권한 불필요)
 const { app, shell } = require('electron');
 // original-fs 는 Electron 의 asar 패치가 적용되지 않은 원본 fs.
 // 이걸 써야 app.asar 를 (가상 폴더가 아니라) 파일 하나로 복사한다.
@@ -7,13 +7,13 @@ const fsp = fs.promises;
 const path = require('path');
 const { execFile } = require('child_process');
 
-const APP_NAME = '스텔라상태';
-const APP_EXE = '스텔라상태.exe';
-const UNINSTALL_EXE = '스텔라상태 제거.exe';
+const APP_NAME = '스텔라리움';
+const APP_EXE = '스텔라리움.exe';
+const UNINSTALL_EXE = '스텔라리움 제거.exe';
 const PUBLISHER = '스텔라리움';
 // 메인 앱이 setAppUserModelId 로 쓰는 값과 반드시 동일해야 한다.
 // 이 값이 시작 메뉴 바로가기에 박혀 있어야 윈도우 토스트 알림이 AUMID('com.stellastatus.app')
-// 대신 바로가기 이름('스텔라상태')으로 표시된다.
+// 대신 바로가기 이름('스텔라리움')으로 표시된다.
 const APP_AUMID = 'com.stellastatus.app';
 const UNINSTALL_KEY = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\StellaStatus';
 
@@ -93,7 +93,7 @@ async function install({ targetDir, desktopShortcut = true, startMenuShortcut = 
 
   // 실행 중인 앱 종료(재설치 시 파일 잠금 방지)
   // ⚠️ '/T'(자식 트리 종료)를 쓰면 안 된다. 업데이트/제거 시 이 인스톨러는 방금
-  //    종료 대상인 앱(스텔라상태.exe)이 spawn 한 '자식 프로세스'로 실행되므로,
+  //    종료 대상인 앱(스텔라리움.exe)이 spawn 한 '자식 프로세스'로 실행되므로,
   //    /T 가 트리를 타고 내려와 인스톨러 자신까지 강제 종료해 버린다
   //    (= 설치 진행 중 창이 그냥 사라짐). 이미지 이름으로만 종료한다.
   await run('taskkill', ['/F', '/IM', APP_EXE]);
@@ -153,7 +153,7 @@ function writeShortcut(linkPath, target, icon, args) {
       cwd: path.dirname(target),
       icon,
       iconIndex: 0,
-      appUserModelId: APP_AUMID, // 토스트 알림이 이 바로가기(=스텔라상태)와 연결되도록
+      appUserModelId: APP_AUMID, // 토스트 알림이 이 바로가기(=스텔라리움)와 연결되도록
       description: APP_NAME,
     });
   } catch (e) {

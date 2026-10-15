@@ -43,25 +43,21 @@ body {
 .bg-star { position: absolute; top: -110px; right: -70px; width: 440px; height: 440px; opacity: .16; transform: rotate(8deg); pointer-events: none; }
 
 /* ── 타이틀바 ────────────────────────────────── */
+/* 타이틀바 '바'를 없앤다 — 투명 오버레이로 창 제어만 상단에 얹고, 웹이 창 전체를 채운다. */
 .titlebar {
-  position: relative; z-index: 60;
-  height: var(--tb-h); display: flex; align-items: center; padding: 0 8px 0 16px; gap: 8px;
-  -webkit-app-region: drag; background: rgba(0,0,0,.18); border-bottom: 1px solid var(--panel-brd);
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  height: 34px; display: flex; align-items: center; justify-content: flex-end;
+  padding: 0 6px; gap: 6px; background: transparent; border: 0;
+  pointer-events: none;            /* 기본은 아래 웹으로 클릭이 통과되게 */
 }
-.tb-drag { flex: 1; height: 100%; }
-.tb-left, .tb-right { display: flex; align-items: center; gap: 6px; -webkit-app-region: no-drag; }
-.brand { display: flex; align-items: center; gap: 8px; }
+/* 좌측 드래그 핸들(신호등 옆). 웹 상단 좌측은 비어 있어 가려도 무방하고, 창 이동만 담당. */
+.tb-drag { position: absolute; left: 0; top: 0; height: 100%; width: 240px; flex: none;
+  -webkit-app-region: drag; pointer-events: auto; }
+.tb-left { display: none; }
+.tb-right { display: flex; align-items: center; gap: 6px; pointer-events: auto; -webkit-app-region: no-drag; }
 
-/* 스텔라상태 ↔ 스텔라리움 화면 전환 토글 */
-.view-toggle { -webkit-app-region: no-drag; display: inline-flex; margin-left: 14px; padding: 3px; gap: 2px;
-  background: rgba(255,255,255,.06); border: 1px solid var(--panel-brd); border-radius: 999px; }
-.vt-btn { -webkit-app-region: no-drag; cursor: pointer; border: none; background: transparent; color: var(--text-mute);
-  font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 999px; transition: background .14s, color .14s; white-space: nowrap; }
-.vt-btn:hover { color: var(--text-dim); }
-.vt-btn.active { background: var(--accent, #8a7ffb); color: var(--accent-ink, #fff); }
-
-/* 스텔라리움 임베드 화면 — 타이틀바 아래 전체를 채운다 */
-.stellarium-view { height: calc(100vh - var(--tb-h)); position: relative; background: var(--bg); }
+/* 스텔라리움 임베드 화면 — 바가 없으므로 창 전체(100vh)를 채운다. */
+.stellarium-view { height: 100vh; position: relative; background: var(--bg); }
 .stellarium-view[hidden] { display: none; }
 .stellarium-webview { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
 .brand-logo { width: 22px; height: 22px; object-fit: contain; }
@@ -79,12 +75,14 @@ body {
 .win-btn:hover { background: rgba(255,255,255,.08); color: var(--text); }
 .win-close:hover { background: #e23b53; color: #fff; }
 
-/* macOS: 네이티브 신호등 버튼(좌측 상단)을 쓴다.
-   - 우측 커스텀 창 버튼(min/max/close)과 구분선은 숨긴다.
-   - 신호등이 브랜드 로고를 가리지 않도록 타이틀바 좌측에 여백을 준다. */
+/* macOS: 네이티브 신호등 버튼(좌측 상단)만 쓴다 — 우측 커스텀 창 버튼은 숨긴다. */
 :root[data-platform="darwin"] .win-btn,
 :root[data-platform="darwin"] .tb-sep { display: none; }
-:root[data-platform="darwin"] .titlebar { padding-left: 82px; }
+/* Windows/Linux: 바가 없으므로 창 버튼(닫기/최소화 등)을 웹 위에 보이게 살짝 칩 배경을 준다. */
+:root[data-platform="win32"] .tb-right,
+:root[data-platform="linux"] .tb-right {
+  background: rgba(16,14,26,.72); border-radius: 9px; padding: 2px; backdrop-filter: blur(6px);
+}
 
 /* 아이콘 공통(아이콘 팩: Lucide, stroke 스타일) */
 .icon-btn svg, .win-btn svg, .s-ico svg, .btn svg, .viewers svg, .t-ico svg, .toast .t-close svg { display: block; }
@@ -480,7 +478,7 @@ body {
 
 /* ── 설정 모달 ──────────────────────────────── */
 /* 설정 팝업은 타이틀바(로고/창 제어)를 가리지 않도록 그 아래부터 덮는다 */
-.modal-backdrop { position: fixed; top: var(--tb-h); left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.55); display: grid; place-items: center; z-index: 50;
+.modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.55); display: grid; place-items: center; z-index: 50;
   opacity: 0; transition: opacity .2s ease; }
 .modal-backdrop.open { opacity: 1; }
 .modal-backdrop .modal { transform: translateY(10px) scale(.97); opacity: 0; transition: transform .24s cubic-bezier(.2,.85,.25,1), opacity .24s ease; }

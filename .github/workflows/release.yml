@@ -1,6 +1,6 @@
 name: Release
 
-# v* 태그를 푸시하면 커스텀 인스톨러(스텔라상태 Setup.exe)를 빌드해 GitHub Releases 에 업로드한다.
+# v* 태그를 푸시하면 커스텀 인스톨러(스텔라리움 Setup.exe)를 빌드해 GitHub Releases 에 업로드한다.
 on:
   push:
     tags:
@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Build custom installer (스텔라상태 Setup.exe)
+      - name: Build custom installer (스텔라리움 Setup.exe)
         run: npm run build-setup
 
       # 태그가 vX.Y.Z.n (네 자리) 이면 베타(Pre-release), vX.Y.Z 이면 정식(Latest)으로 표시한다.
@@ -46,7 +46,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: 스텔라상태 ${{ github.ref_name }}
+          name: 스텔라리움 ${{ github.ref_name }}
           body_path: RELEASE_NOTES.md
           files: dist-installer/*.exe
           fail_on_unmatched_files: true
@@ -75,11 +75,11 @@ jobs:
 
       - name: Build macOS dmg (unsigned)
         # arch 를 명시하지 않으면 호스트(arm64)만 빌드된다. Intel(x64) 까지 만들려면 둘 다 지정.
-        # ⚠️ productName 을 반드시 ASCII("StellaStatus")로 오버라이드한다.
-        #    (electron-builder.yml 의 productName='스텔라상태' 를 그대로 쓰면 헬퍼 앱이
-        #     '스텔라상태 Helper (GPU).app' 처럼 한글 경로가 되어, macOS 에서 앱이
+        # ⚠️ productName 을 반드시 ASCII("Stellarium")로 오버라이드한다.
+        #    (electron-builder.yml 의 productName='스텔라리움' 를 그대로 쓰면 헬퍼 앱이
+        #     '스텔라리움 Helper (GPU).app' 처럼 한글 경로가 되어, macOS 에서 앱이
         #     실행 시 SIGTRAP 으로 크래시한다. Windows 는 한글 productName 이 문제없다.)
-        run: npx electron-builder --mac dmg --arm64 --x64 -c.productName=StellaStatus --publish never
+        run: npx electron-builder --mac dmg --arm64 --x64 -c.productName=Stellarium --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false   # 미서명: 키체인 인증서 자동탐색 비활성화
 

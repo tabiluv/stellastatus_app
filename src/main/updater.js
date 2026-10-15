@@ -156,17 +156,22 @@ async function fetchTargetRelease(beta) {
 
 // 최신 릴리스 확인 → 새 버전이면 알림. 필수는 즉시 자동 다운로드, 일반은 [설치하기] 시 다운로드.
 async function check({ manual = false } = {}) {
+  // Microsoft Store(MSIX) 배포본은 스토어가 업데이트를 관리한다.
+  //  자체 업데이터로 GitHub 의 Setup.exe 를 받아 실행하면 안 되므로(샌드박스/서명 충돌),
+  //  스토어에서 실행 중이면 업데이트 확인을 건너뛴다. (process.windowsStore: Store 앱일 때 true)
+  if (process.windowsStore) { emit({ state: 'none' }); return { state: 'none' }; }
   if (!OWNER || OWNER === 'YOUR_GITHUB_USERNAME' || !REPO) {
-    emit({ state: manual ? 'error' : 'none', message: '배포 저장소가 설정되지 않았습니다.' });
-    return;
+    const st = manual ? 'error' : 'none';
+    emit({ state: st, message: '배포 저장소가 설정되지 않았습니다.' });
+    return { state: st, message: '배포 저장소가 설정되지 않았습니다.' };
   }
   try {
     emit({ state: 'checking' });
     const beta = wantsBeta();
     const rel = await fetchTargetRelease(beta);
-    if (!rel) { emit({ state: 'none' }); return; }
+    if (!rel) { emit({ state: 'none' }); return { state: 'none' }; }
     const latest = rel.tag_name || rel.name || '0.0.0';
-    if (cmpVersion(latest, currentVersion()) <= 0) { emit({ state: 'none' }); return; }
+    if (cmpVersion(latest, currentVersion()) <= 0) { emit({ state: 'none' }); return { state: 'none' }; }
 
     // 플랫폼별 설치 파일 선택: 맥은 .dmg(아키텍처 매칭), 윈도우는 Setup.exe
     let asset;
@@ -177,7 +182,7 @@ async function check({ manual = false } = {}) {
     } else {
       asset = (rel.assets || []).find((a) => /Setup.*\.exe$/i.test(a.name) || /\.exe$/i.test(a.name));
     }
-    if (!asset) { emit({ state: 'error', message: '설치 파일을 찾을 수 없습니다.' }); return; }
+    if (!asset) { emit({ state: 'error', message: '설치 파일을 찾을 수 없습니다.' }); return { state: 'error', message: '설치 파일을 찾을 수 없습니다.' }; }
 
     const info = {
       version: String(latest).replace(/^v/, ''),
@@ -196,8 +201,11 @@ async function check({ manual = false } = {}) {
 
     // 필수 업데이트만 즉시 자동 다운로드. 일반은 [설치하기]를 누를 때까지 보류한다.
     if (info.mandatory) await downloadPending();
+    return { state: 'available', ...info };
   } catch (e) {
-    emit({ state: 'error', message: String(e?.message || e) });
+    const message = String(e?.message || e);
+    emit({ state: 'error', message });
+    return { state: 'error', message };
   }
 }
 

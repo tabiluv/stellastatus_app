@@ -41,6 +41,10 @@ contextBridge.exposeInMainWorld('stella', {
   close: () => ipcRenderer.send('window:close'),
   hide: () => ipcRenderer.send('window:hide'),
   onMaximized: (cb) => sub('window:maximized', cb),
+  // 트레이 메뉴에서 설정(정보) 열기 신호
+  onOpenSettings: (cb) => sub('open:settings', cb),
+  // 트레이 메뉴에서 '업데이트 확인'(수동) 신호 — 정보 모달을 열고 체크한다
+  onCheckUpdate: (cb) => sub('update:check-manual', cb),
 
   // 업데이트
   getVersion: () => ipcRenderer.invoke('app:version'),

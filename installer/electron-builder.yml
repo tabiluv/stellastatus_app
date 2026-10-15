@@ -1,7 +1,7 @@
 appId: com.stellastatus.installer
 # 서명 아티팩트의 Product Name 은 프로젝트명으로 고정(파일명은 artifactName 으로 별도 지정)
-productName: 스텔라상태
-executableName: 스텔라상태 Setup
+productName: 스텔라리움
+executableName: 스텔라리움 Setup
 copyright: Copyright © 2026 스텔라리움
 
 directories:
@@ -28,6 +28,6 @@ win:
   icon: build/icon.ico
 
 portable:
-  artifactName: 스텔라상태 Setup.exe
+  artifactName: 스텔라리움 Setup.exe
   # unpackDirName 을 지정하지 않으면 매 빌드마다 고유한 임시 폴더로 추출되어
   # 예전/손상된 추출본이 재사용되는 문제를 방지한다.

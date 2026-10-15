@@ -1,4 +1,4 @@
-# StellaStatus
+# Stellarium
 
 [한국어](README.md) | [English](README.en.md) | **日本語**
 
@@ -36,14 +36,14 @@ npm start
 
 ## インストーラーのビルド
 
-カスタムインストーラー（`스텔라상태 Setup.exe`）を一度にビルドします。
+カスタムインストーラー（`스텔라리움 Setup.exe`）を一度にビルドします。
 
 ```bash
 npm run build-setup
 ```
 
 ビルドはメインアプリのパッケージング → インストーラーへのアプリ本体の同梱 → 単一実行ファイルの生成という流れで進み、
-成果物は `dist-installer/스텔라상태 Setup.exe` の1ファイルのみです。Electronとアプリの両方が含まれているため、
+成果物は `dist-installer/스텔라리움 Setup.exe` の1ファイルのみです。Electronとアプリの両方が含まれているため、
 このファイルさえあればインストールできます。
 
 インストーラーはフレームレスのダークUI（利用規約、インストール先の選択、進行状況、完了）で動作し、
@@ -55,7 +55,7 @@ npm run build-setup
 
 ## インストールとSmartScreenについて
 
-`스텔라상태 Setup.exe` を実行するだけです。
+`스텔라리움 Setup.exe` を実行するだけです。
 
 コード署名が行われていないため、初回実行時にSmartScreenの警告が表示されることがあります。
 青い画面で「詳細情報」をクリックし、「実行」を押してください。ブラウザでのダウンロード時に警告が出た場合は、
@@ -63,7 +63,7 @@ npm run build-setup
 
 ## 配布 (GitHub Releases)
 
-配布ファイルは `스텔라상태 Setup.exe` の1つだけです。独自のアップデーターがGitHub Releases APIで
+配布ファイルは `스텔라리움 Setup.exe` の1つだけです。独自のアップデーターがGitHub Releases APIで
 最新リリースを確認するため、別途メタデータファイルは必要ありません。
 
 リポジトリにコードをプッシュしたあと、バージョンタグをプッシュすると、GitHub ActionsがWindows上で
@@ -77,7 +77,7 @@ git push origin v1.0.0
 自動配布を利用するには、リポジトリの Settings > Actions > General > Workflow permissions で
 「Read and write permissions」を有効にする必要があります。
 
-手動でアップロードする場合は、`npm run build-setup` で作成した `dist-installer/스텔라상태 Setup.exe` を
+手動でアップロードする場合は、`npm run build-setup` で作成した `dist-installer/스텔라리움 Setup.exe` を
 リリースに添付してください。
 
 新しいバージョンを出す際は、`package.json` の `version` を上げてから `v1.0.x` タグをプッシュします。

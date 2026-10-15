@@ -33,7 +33,7 @@ assignees: ''
 
 ### 앱 정보
 - 앱 버전: <!-- 예: v1.0.5 -->
-- 설치 파일: <!-- 예: StellaStatus-1.0.5-arm64.dmg / StellaStatus-Setup-1.0.5.exe -->
+- 설치 파일: <!-- 예: Stellarium-1.0.5-arm64.dmg / Stellarium-Setup-1.0.5.exe -->
 - 채널: <!-- 정식(Latest) / 베타(Beta) -->
 
 ### 시스템 정보

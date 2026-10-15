@@ -1,11 +1,11 @@
 {
   "name": "stellastatus-app",
   "productName": "StellaStatus",
-  "version": "1.0.8",
-  "fullVersion": "1.0.8",
+  "version": "1.0.9",
+  "fullVersion": "1.0.9",
   "description": "스텔라이브 멤버의 치지직 방송 상태를 확인하고 윈도우 알림을 보내주는 데스크톱 앱",
   "author": {
-    "name": "StellaStatus",
+    "name": "Stellarium",
     "email": "tabi.luv@icloud.com"
   },
   "license": "MIT",
@@ -20,9 +20,12 @@
     "dist": "electron-builder",
     "dist-mac": "node scripts/build-mac.mjs",
     "build-setup": "node scripts/build-setup.mjs",
+    "gen-appx": "node scripts/gen-appx-assets.mjs",
+    "build-appx": "npm run gen-icon && npm run gen-logos && npm run gen-appx && electron-builder --win appx --publish never",
     "release": "electron-builder --publish always"
   },
   "dependencies": {
+    "discord-rpc": "^4.0.1",
     "electron-store": "^8.2.0",
     "stellastatus": "^0.1.0"
   },

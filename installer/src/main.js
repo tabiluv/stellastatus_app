@@ -39,7 +39,7 @@ function createWindow() {
     frame: false,
     backgroundColor: '#1a1418',
     icon: path.join(__dirname, '..', 'build', 'icon.png'),
-    title: '스텔라상태 설치',
+    title: '스텔라리움 설치',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

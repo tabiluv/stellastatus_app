@@ -1,4 +1,4 @@
-# 스텔라상태 (StellaStatus)
+# 스텔라리움 (Stellarium)
 
 **한국어** | [English](README.en.md) | [日本語](README.jp.md)
 
@@ -36,14 +36,14 @@ npm start
 
 ## 설치 파일 빌드
 
-커스텀 인스톨러(`스텔라상태 Setup.exe`)를 한 번에 빌드합니다.
+커스텀 인스톨러(`스텔라리움 Setup.exe`)를 한 번에 빌드합니다.
 
 ```bash
 npm run build-setup
 ```
 
 빌드 과정은 메인 앱 패키징 → 인스톨러에 앱 본체 동봉 → 단일 실행 파일 생성 순이며,
-결과물은 `dist-installer/스텔라상태 Setup.exe` 하나입니다. Electron과 앱이 모두 포함되어
+결과물은 `dist-installer/스텔라리움 Setup.exe` 하나입니다. Electron과 앱이 모두 포함되어
 있어 이 파일만 있으면 설치됩니다.
 
 인스톨러는 프레임리스 다크 UI(이용약관, 설치 위치 선택, 진행, 완료)로 동작하고,
@@ -54,7 +54,7 @@ npm run build-setup
 
 ## 설치 및 SmartScreen 안내
 
-`스텔라상태 Setup.exe`를 실행하면 됩니다.
+`스텔라리움 Setup.exe`를 실행하면 됩니다.
 
 코드 서명이 되어 있지 않아 처음 실행 시 SmartScreen 경고가 나타날 수 있습니다.
 파란 창에서 "추가 정보"를 누른 뒤 "실행"을 누르면 됩니다. 브라우저에서 다운로드할 때
@@ -62,7 +62,7 @@ npm run build-setup
 
 ## 배포 (GitHub Releases)
 
-배포 파일은 `스텔라상태 Setup.exe` 하나입니다. 자체 업데이터가 GitHub Releases API로
+배포 파일은 `스텔라리움 Setup.exe` 하나입니다. 자체 업데이터가 GitHub Releases API로
 최신 릴리스를 확인하므로 별도 메타데이터 파일은 필요 없습니다.
 
 저장소에 코드를 올린 뒤, 버전 태그를 푸시하면 GitHub Actions가 윈도우에서 인스톨러를
@@ -76,7 +76,7 @@ git push origin v1.0.0
 자동 배포를 쓰려면 저장소 Settings > Actions > General > Workflow permissions에서
 "Read and write permissions"를 켜야 합니다.
 
-직접 올릴 경우, `npm run build-setup`으로 만든 `dist-installer/스텔라상태 Setup.exe`를
+직접 올릴 경우, `npm run build-setup`으로 만든 `dist-installer/스텔라리움 Setup.exe`를
 릴리스에 첨부하면 됩니다.
 
 새 버전을 낼 때는 `package.json`의 `version`을 올린 뒤 `v1.0.x` 태그를 푸시합니다.

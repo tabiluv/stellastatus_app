@@ -1,4 +1,4 @@
-# StellaStatus (스텔라상태)
+# Stellarium (스텔라리움)
 
 [한국어](README.md) | **English** | [日本語](README.jp.md)
 
@@ -37,14 +37,14 @@ Use `npm run dev` to also open DevTools.
 
 ## Building the installer
 
-Builds the custom installer (`스텔라상태 Setup.exe`) in one step.
+Builds the custom installer (`스텔라리움 Setup.exe`) in one step.
 
 ```bash
 npm run build-setup
 ```
 
 The build packages the main app, bundles it inside the installer, and produces a single executable at
-`dist-installer/스텔라상태 Setup.exe`. Electron and the app are all included, so that single file is
+`dist-installer/스텔라리움 Setup.exe`. Electron and the app are all included, so that single file is
 enough to install.
 
 The installer uses a frameless dark UI (welcome, terms, install location, progress, done), creates
@@ -53,7 +53,7 @@ the app settings.
 
 ## Distribution (GitHub Releases)
 
-The distributed artifact is a single `스텔라상태 Setup.exe`. The app's self-updater checks the GitHub
+The distributed artifact is a single `스텔라리움 Setup.exe`. The app's self-updater checks the GitHub
 Releases API for the latest release, so no extra metadata files are required.
 
 Push a version tag and GitHub Actions builds the installer and uploads it to the release.
