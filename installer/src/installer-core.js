@@ -10,6 +10,10 @@ const { execFile } = require('child_process');
 const APP_NAME = '스텔라리움';
 const APP_EXE = '스텔라리움.exe';
 const UNINSTALL_EXE = '스텔라리움 제거.exe';
+// 리브랜딩 전(스텔라상태) 실행파일·제거파일·바로가기 이름 — 구버전에서 업데이트할 때 종료·정리 대상.
+const LEGACY_EXE = '스텔라상태.exe';
+const LEGACY_UNINSTALL_EXE = '스텔라상태 제거.exe';
+const LEGACY_NAME = '스텔라상태';
 const PUBLISHER = '스텔라리움';
 // 메인 앱이 setAppUserModelId 로 쓰는 값과 반드시 동일해야 한다.
 // 이 값이 시작 메뉴 바로가기에 박혀 있어야 윈도우 토스트 알림이 AUMID('com.stellastatus.app')
@@ -96,10 +100,14 @@ async function install({ targetDir, desktopShortcut = true, startMenuShortcut = 
   //    종료 대상인 앱(스텔라리움.exe)이 spawn 한 '자식 프로세스'로 실행되므로,
   //    /T 가 트리를 타고 내려와 인스톨러 자신까지 강제 종료해 버린다
   //    (= 설치 진행 중 창이 그냥 사라짐). 이미지 이름으로만 종료한다.
-  await run('taskkill', ['/F', '/IM', APP_EXE]);
+  // ⚠️ 리브랜딩(스텔라상태 → 스텔라리움)으로 실행파일 이름이 바뀌었다. 구버전(스텔라상태.exe)에서
+  //    업데이트하는 경우 지금 실행 중인 건 '옛 이름'이라, 신 이름만 종료하면 옛 프로세스가 살아
+  //    파일을 잠근 채라 복사가 EBUSY(chrome_100_percent.pak 등)로 실패한다. 신·구 이름을 모두 종료한다.
+  const KILL_EXES = [APP_EXE, LEGACY_EXE];
+  for (const exe of KILL_EXES) await run('taskkill', ['/F', '/IM', exe]);
   // 강제 종료 직후엔 exe/DLL 핸들이 잠깐 남아 복사가 EBUSY 로 실패할 수 있으므로
   // 프로세스가 실제로 사라질 때까지 잠시 대기한다.
-  await waitForExeGone(APP_EXE, 5000);
+  for (const exe of KILL_EXES) await waitForExeGone(exe, 5000);
 
   const files = await listFiles(src);
   const total = files.length || 1;
@@ -140,6 +148,13 @@ async function install({ targetDir, desktopShortcut = true, startMenuShortcut = 
 
   // 언인스톨 레지스트리(제어판 프로그램 목록) — 버전 갱신 포함
   await writeUninstallRegistry(dest, uninstallerPath, exePath);
+
+  // 리브랜딩 전(스텔라상태) 잔재 정리 — 구버전에서 업데이트한 경우에만 실제로 지워진다(없으면 무해).
+  //  옛 실행파일/제거파일이 남으면 오래된 바로가기로 구버전이 계속 실행되고, 제어판에도 중복으로 보인다.
+  await fsp.rm(path.join(dest, LEGACY_EXE), { force: true }).catch(() => {});
+  await fsp.rm(path.join(dest, LEGACY_UNINSTALL_EXE), { force: true }).catch(() => {});
+  await fsp.rm(path.join(startDir, `${LEGACY_NAME}.lnk`), { force: true }).catch(() => {});
+  try { await fsp.rm(path.join(app.getPath('desktop'), `${LEGACY_NAME}.lnk`), { force: true }); } catch { /* ignore */ }
 
   onProgress({ phase: 'done', percent: 100, text: update ? '업데이트가 완료되었습니다.' : '설치가 완료되었습니다.' });
   return { installDir: dest, exePath };
@@ -194,8 +209,8 @@ function launch(exePath) {
 async function uninstall({ onProgress = () => {} } = {}) {
   onProgress({ phase: 'prepare', percent: 5, text: '제거를 준비하는 중…' });
   // 업데이트와 동일한 이유로 '/T' 를 쓰지 않는다(제거 프로그램도 앱의 자식 프로세스).
-  await run('taskkill', ['/F', '/IM', APP_EXE]);
-  await waitForExeGone(APP_EXE, 5000);
+  for (const exe of [APP_EXE, LEGACY_EXE]) await run('taskkill', ['/F', '/IM', exe]);
+  for (const exe of [APP_EXE, LEGACY_EXE]) await waitForExeGone(exe, 5000);
 
   // 설치 위치 파악
   const q = await run('reg', ['query', UNINSTALL_KEY, '/v', 'InstallLocation']);
