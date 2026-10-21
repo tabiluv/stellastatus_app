@@ -43,21 +43,21 @@ body {
 .bg-star { position: absolute; top: -110px; right: -70px; width: 440px; height: 440px; opacity: .16; transform: rotate(8deg); pointer-events: none; }
 
 /* ── 타이틀바 ────────────────────────────────── */
-/* 타이틀바 '바'를 없앤다 — 투명 오버레이로 창 제어만 상단에 얹고, 웹이 창 전체를 채운다. */
+/* '바'를 최소화: 웹과 같은 다크색의 얇은 30px 상단 strip. 이 strip 전체가 창 이동 영역이다.
+   (webview 위에 겹친 오버레이로는 -webkit-app-region: drag 가 동작하지 않아서, webview 를
+    이 strip 아래부터 시작시키고 strip 은 '호스트 페이지'로 둔다 → 드래그가 실제로 먹는다.) */
 .titlebar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-  height: 34px; display: flex; align-items: center; justify-content: flex-end;
-  padding: 0 6px; gap: 6px; background: transparent; border: 0;
-  pointer-events: none;            /* 기본은 아래 웹으로 클릭이 통과되게 */
+  height: 30px; display: flex; align-items: center; justify-content: flex-end;
+  padding: 0 6px; gap: 6px; background: var(--bg); border: 0;
+  -webkit-app-region: drag;        /* strip 전체를 드래그 영역으로 */
 }
-/* 좌측 드래그 핸들(신호등 옆). 웹 상단 좌측은 비어 있어 가려도 무방하고, 창 이동만 담당. */
-.tb-drag { position: absolute; left: 0; top: 0; height: 100%; width: 240px; flex: none;
-  -webkit-app-region: drag; pointer-events: auto; }
+.tb-drag { flex: 1; height: 100%; -webkit-app-region: drag; }
 .tb-left { display: none; }
-.tb-right { display: flex; align-items: center; gap: 6px; pointer-events: auto; -webkit-app-region: no-drag; }
+.tb-right { display: flex; align-items: center; gap: 6px; -webkit-app-region: no-drag; }
 
-/* 스텔라리움 임베드 화면 — 바가 없으므로 창 전체(100vh)를 채운다. */
-.stellarium-view { height: 100vh; position: relative; background: var(--bg); }
+/* 스텔라리움 임베드 화면 — 상단 strip(30px) 아래 전체를 채운다. */
+.stellarium-view { position: fixed; top: 30px; left: 0; right: 0; bottom: 0; height: auto; background: var(--bg); }
 .stellarium-view[hidden] { display: none; }
 .stellarium-webview { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
 .brand-logo { width: 22px; height: 22px; object-fit: contain; }

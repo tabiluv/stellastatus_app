@@ -242,7 +242,9 @@ async function downloadAndInstall() {
   } catch (e) {
     // 인앱 다운로드가 재시도까지 다 실패하면(회선/백신 간섭 등), 브라우저로 직접 받도록
     // 대체 경로를 열어 준다. 어떤 이유로든 사용자가 업데이트를 받을 길을 항상 보장.
-    const url = (pendingDownload && pendingDownload.url) || `https://github.com/${OWNER}/${REPO}/releases/latest`;
+    let url = (pendingDownload && pendingDownload.url) || `https://github.com/${OWNER}/${REPO}/releases/latest`;
+    // 보안: GitHub 응답에서 온 URL 이라도 https 만 연다(shell.openExternal 로 위험한 스킴 실행 방지).
+    if (!/^https:\/\//i.test(url)) url = `https://github.com/${OWNER}/${REPO}/releases/latest`;
     try { shell.openExternal(url); } catch { /* ignore */ }
     emit({ state: 'manual-download', message: String(e?.message || e) });
   }

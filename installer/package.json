@@ -1,7 +1,7 @@
 {
   "name": "stellastatus-setup",
   "productName": "스텔라리움",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "스텔라리움 커스텀 설치 프로그램",
   "main": "src/main.js",
   "author": "스텔라리움",

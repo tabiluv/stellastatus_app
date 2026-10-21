@@ -1996,22 +1996,9 @@
     I18N.setLang(state.settings.language || 'ko');
     I18N.apply(document);
     // 앱은 스텔라리움 웹을 메인 화면으로 보여준다(방송 상태 화면은 제거됨 — 토글 없이 항상 스텔라리움).
-    //  숨어 있는 .content 의 폴러·트레이는 그대로 돌아, 로그인 전 네이티브 알림 폴백과
-    //  트레이 라이브 수를 유지한다. 로그인 시엔 웹의 AppNotifyMirror 가 계정 알림을 미러링한다.
+    //  로컬 치지직 폴링(멤버/스케줄 조회·뱅온 판정)은 완전히 제거됐다 — 방송 상태·알림·브라우저
+    //  자동 열기는 모두 스텔라리움 웹(로그인 계정)이 담당한다. 여기서는 웹만 띄운다.
     showStellarium();
-    state.members = (await api.getMembers()) || [];
-    state.thumbStamp = Date.now();
-    render();
-    loadSchedule(); // 뱅온은 시작 시 1회 + 이후 1시간마다 재조회
-    setInterval(loadSchedule, 60 * 60 * 1000);
-    // 시간이 지나며 시작/종료가 바뀌는 것을 앱이 주기적으로 재판정(재요청 없음, 변화 있을 때만 다시 그림)
-    setInterval(() => renderSchedule(), 30000);
-    // 라이브 카드의 방송 경과 시간 1분마다 갱신(전체 리렌더 없이 텍스트만)
-    setInterval(() => {
-      document.querySelectorAll('.live-elapsed[data-open]').forEach((el) => {
-        el.innerHTML = icon('clock', 12) + ' ' + esc(fmtUptime(+el.dataset.open));
-      });
-    }, 60000);
     // 릴리스 노트 등 마크다운 링크 클릭 → 외부 브라우저
     document.body.addEventListener('click', (e) => {
       const a = e.target.closest('.md-link');
@@ -2026,32 +2013,8 @@
     // 통합 설문 배너(진행 중 · 미참여 · 닫지 않음 일 때만) — 시작 시 1회 판단.
     updateSurveyBanner();
 
-    api.onMembers((members) => {
-      try {
-        state.members = members || [];
-        state.thumbStamp = Date.now();
-        $('#btnRefresh')?.querySelector('svg')?.classList.remove('spin');
-        render();
-        renderSchedule(); // 라이브 상태 변화 반영(내부에서 변화 있을 때만 다시 그림)
-        if (!$('#settingsModal').hidden) {
-          buildMemberList('#subList', state.settings.subscribed, saveSubscriptions);
-          buildMemberList('#autoOpenList', state.settings.autoOpenList, saveAutoOpen);
-          updateAutoOpenEnabled();
-        }
-      } catch (err) {
-        console.error('members 갱신 처리 오류:', err);
-      }
-    });
-    api.onPolling((busy) => {
-      const svg = $('#btnRefresh')?.querySelector('svg');
-      if (svg) busy ? svg.classList.add('spin') : svg.classList.remove('spin');
-    });
-    // 방송 시작 → 인앱 플로팅 알림
-    api.onLive((live) => {
-      (live || []).forEach((m) =>
-        showToast({ avatar: m.avatar, accent: m.accent, title: T('toast.liveTitle', { name: I18N.memberName(m) }), desc: m.title || T('toast.liveDesc'), url: m.liveUrl, duration: 7000 }),
-      );
-    });
+    // 멤버/폴링/라이브 푸시 리스너는 제거됐다 — 로컬 치지직 폴링이 사라져 메인에서 더 이상
+    //  보내지 않는다. 방송 상태·알림은 스텔라리움 웹(webview)이 담당한다. 업데이트 상태만 유지.
     api.onUpdateStatus(handleUpdate);
   }
 

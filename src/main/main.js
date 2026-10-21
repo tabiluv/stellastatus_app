@@ -18,7 +18,8 @@ const updater = require('./updater');
 const store = require('./store');
 const i18n = require('./i18n');
 const { translateBatch } = require('./translate');
-const { Poller, MIN_INTERVAL_SEC } = require('./poller');
+// 로컬 치지직 폴링(Poller)은 더 이상 쓰지 않는다 — 알림·브라우저 자동 열기·멤버/스케줄은
+//  모두 스텔라리움 계정/웹 데이터에서만 온다. require 자체를 제거해 로컬 네트워크 호출을 끊는다.
 const discord = require('./discord');
 
 // 표시/업데이트용 버전. package.json 의 version 은 빌드 도구(electron-builder) 요구로 3자리 semver 여야 하므로,
@@ -33,6 +34,40 @@ const isDev = process.argv.includes('--dev') || !app.isPackaged;
 
 // web(스텔라리움) 기준 주소 — 개발은 로컬 web 서버, 배포는 stellarium.kr.
 const webBase = () => process.env.STELLA_WEB_BASE || (isDev ? 'http://localhost:3000' : 'https://stellarium.kr');
+
+// 이 URL 을 앱 webview 안에서 계속 열어야 하는가. 그 외(유튜브·치지직·외부 사이트 등)는 기본 브라우저로 연다.
+//  - 스텔라리움 자신(stellarium.kr / localhost)은 당연히 안에서.
+//  - 로그인(OAuth) 흐름은 webview 안에서 끝나야 콜백이 돌아오므로 구글/네이버 로그인 호스트도 허용한다.
+function keepInApp(url) {
+  let h;
+  try { h = new URL(url).hostname.toLowerCase(); } catch { return true; } // 상대/비정상 URL 은 그냥 둔다
+  const allow = ['stellarium.kr', 'localhost', '127.0.0.1', 'accounts.google.com', 'nid.naver.com'];
+  return allow.some((a) => h === a || h.endsWith('.' + a));
+}
+
+// 외부 열기 보안 가드 — shell.openExternal 은 OS 에 등록된 스킴 핸들러(file:, 커스텀 앱 스킴 등)를
+//  실행할 수 있어 신뢰할 수 없는 URL(웹/치지직 데이터)에서 오면 위험하다. http(s)·mailto 만 연다.
+function safeOpenExternal(url) {
+  if (typeof url !== 'string' || !url) return;
+  let proto;
+  try { proto = new URL(url).protocol; } catch { return; }
+  if (proto === 'http:' || proto === 'https:' || proto === 'mailto:') shell.openExternal(url);
+}
+
+// 설정 변경 허용 키 — 브리지(stellarium.kr)로 들어오는 setSettings 가 임의 키나 프로토타입 오염
+//  (__proto__ 등)을 config 에 쓰지 못하도록, 알려진 설정만 통과시킨다.
+const ALLOWED_SETTINGS = new Set([
+  'language', 'pollIntervalSec', 'notifyEnabled', 'notifyOffline', 'autoOpenLive', 'autoOpenList',
+  'subscribed', 'minimizeToTray', 'launchAtStartup', 'startHidden', 'betaChannel', 'showThumbnails',
+  'pinned', 'windowBounds', 'lastShownVersion', 'viewMode', 'discordRpc',
+]);
+function sanitizeSettingsPatch(patch) {
+  const clean = {};
+  if (patch && typeof patch === 'object' && !Array.isArray(patch)) {
+    for (const k of Object.keys(patch)) if (ALLOWED_SETTINGS.has(k)) clean[k] = patch[k];
+  }
+  return clean;
+}
 
 // 디스코드 Rich Presence 문구 — 지금 보고 있는 스텔라리움 webview 의 URL·제목으로 '무엇을 보는 중'인지 만든다.
 // 영상 페이지면 유튜브 videoId 를 뽑는다. /video/<id>, /videos/<id>, /watch?v=<id> 지원.
@@ -73,7 +108,6 @@ function presenceFor(url, title) {
 let mainWindow = null;
 let tray = null;
 let isQuitting = false;
-const poller = new Poller();
 
 // 윈도우 알림에 앱 이름이 제대로 표시되도록 AppUserModelID 설정
 app.setAppUserModelId(APP_ID);
@@ -109,7 +143,7 @@ function createWindow() {
     //        (trafficLightPosition 으로 커스텀 타이틀바 높이(--tb-h:44px) 중앙에 맞춘다.)
     // Windows/기타: 프레임을 없애고 우측 커스텀 버튼(min/max/close)을 사용한다.
     ...(process.platform === 'darwin'
-      ? { titleBarStyle: 'hidden', trafficLightPosition: { x: 14, y: 15 } }
+      ? { titleBarStyle: 'hidden', trafficLightPosition: { x: 14, y: 9 } }
       : { frame: false }),
     backgroundColor: '#0b0a1a',
     icon: ICON_PATH,
@@ -176,50 +210,35 @@ function createTray() {
   if (!img.isEmpty()) img = img.resize({ width: 16, height: 16 });
   tray = new Tray(img.isEmpty() ? nativeImage.createEmpty() : img);
   tray.setToolTip('스텔라리움');
-  rebuildTrayMenu([]);
+  rebuildTrayMenu();
   tray.on('double-click', () => showWindow());
   tray.on('click', () => showWindow());
 }
 
-let lastTrayMembers = [];
-function rebuildTrayMenu(members) {
+function rebuildTrayMenu() {
   if (!tray) return;
-  lastTrayMembers = members; // 언어 변경 시 같은 목록으로 다시 그리기 위해 보관
-  const live = members.filter((m) => m.isLive);
-  const liveItems = live.length
-    ? live.map((m) => ({
-        label: `🔴 ${i18n.memberName(m)}  ${m.viewerCount != null ? i18n.t('tray.viewers', { n: m.viewerCount.toLocaleString() }) : ''}`,
-        click: () => shell.openExternal(m.liveUrl),
-      }))
-    : [{ label: i18n.t('tray.noLive'), enabled: false }];
-
+  // 로컬 방송 감지를 쓰지 않으므로 트레이는 단순하게 — 창 열기/설정/업데이트/종료만.
   const menu = Menu.buildFromTemplate([
-    { label: i18n.t('tray.header', { n: live.length }), enabled: false },
-    { type: 'separator' },
-    ...liveItems,
+    { label: '스텔라리움', enabled: false },
     { type: 'separator' },
     { label: i18n.t('tray.open'), click: () => showWindow() },
-    { label: i18n.t('tray.refresh'), click: () => poller.pollOnce() },
     { label: i18n.t('tray.settings'), click: () => { showWindow(); if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('open:settings'); } },
     { label: i18n.t('tray.checkUpdate'), click: () => { showWindow(); if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('update:check-manual'); } },
     { type: 'separator' },
     { label: i18n.t('tray.quit'), click: () => quitApp() },
   ]);
   tray.setContextMenu(menu);
-  tray.setToolTip(i18n.t('tray.tooltip', { n: live.length }));
+  tray.setToolTip('스텔라리움');
 }
 
 function quitApp() {
   isQuitting = true;
-  poller.stop();
   app.quit();
 }
 
 // ── 알림 ──────────────────────────────────────────────────
-// 웹 미러링 상태 — 앱 webview 가 로그인된 계정의 알림(inbox)을 넘겨받아 띄우는 중이면 true.
-//  이때는 앱 자체 폴링 기반 네이티브 알림/자동열기를 끈다(중복 방지). 단일 소스 = 웹 inbox.
-//  비로그인(미러 비활성)일 때만 아래 네이티브 방송 알림이 폴백으로 동작한다.
-let webMirrorActive = false;
+// 알림의 유일한 소스는 웹(로그인된 계정 inbox → AppNotifyMirror → notify:fromWeb)이다.
+//  로컬 치지직 폴링이 제거돼 중복 걱정이 없으므로, mirror:active 는 단순 ack 만 한다.
 // 웹에서 넘어온 알림 중복 제거 — 여러 webview(홈/캘린더/설문)가 동시에 넘겨도 id 로 1회만 표시.
 const shownWebNotif = new Map(); // id -> ts(ms)
 
@@ -230,26 +249,6 @@ function absUrl(u) {
   if (u.startsWith('/')) return webBase().replace(/\/$/, '') + u;
   return null;
 }
-// 웹 알림의 slug → 앱 멤버 key (autoOpenList 는 key 기반). 못 찾으면 null.
-function keyForSlug(slug) {
-  if (!slug) return null;
-  const m = (poller.members || []).find((x) => x.slug === slug || x.key === slug);
-  return m ? m.key : null;
-}
-
-function isSubscribed(key) {
-  const subs = store.get('subscribed');
-  return subs == null || (Array.isArray(subs) && subs.includes(key));
-}
-
-function maybeAutoOpen(member) {
-  if (webMirrorActive) return; // 미러링 중엔 웹 알림 쪽(notify:fromWeb)에서 자동열기 처리
-  if (!store.get('autoOpenLive')) return;
-  const list = store.get('autoOpenList'); // null = 전체
-  if (Array.isArray(list) && !list.includes(member.key)) return;
-  if (member.liveUrl) shell.openExternal(member.liveUrl);
-}
-
 // 알림 아이콘은 nativeImage 로 만들어 캐시한다.
 //  - 패키징(asar) 후 ICON_PATH 는 '...app.asar/build/icon.png' 처럼 asar 내부 경로가 된다.
 //    이 문자열 경로를 그대로 icon 에 넘기면 macOS 의 네이티브 이미지 로더가 asar 를 읽지 못해
@@ -265,41 +264,6 @@ function notifyIcon() {
     } catch { _notifyIcon = null; }
   }
   return _notifyIcon || undefined;
-}
-
-function notifyLive(member) {
-  if (webMirrorActive) return; // 미러링 중엔 웹 inbox 알림으로 대체(중복 방지)
-  if (!store.get('notifyEnabled')) return;
-  if (!isSubscribed(member.key)) return;
-  if (!Notification.isSupported()) return;
-
-  const n = new Notification({
-    title: i18n.t('notify.liveTitle', { name: i18n.memberName(member) }),
-    body: member.title || i18n.t('notify.liveBody'),
-    icon: notifyIcon(),
-    silent: false,
-  });
-  n.on('click', () => shell.openExternal(member.liveUrl));
-  n.on('failed', (_e, err) => console.error('알림 표시 실패(live):', err));
-  n.show();
-}
-
-// 방송 종료(방종) 알림 — 구독한 멤버가 라이브 → 오프라인으로 바뀌면 알린다.
-function notifyOffline(member) {
-  if (webMirrorActive) return; // 미러링 중엔 웹 inbox 알림으로 대체(중복 방지)
-  if (!store.get('notifyOffline')) return;
-  if (!isSubscribed(member.key)) return;
-  if (!Notification.isSupported()) return;
-
-  const n = new Notification({
-    title: i18n.t('notify.offTitle', { name: i18n.memberName(member) }),
-    body: i18n.t('notify.offBody'),
-    icon: notifyIcon(),
-    silent: false,
-  });
-  n.on('click', () => shell.openExternal(member.channelUrl || member.liveUrl || 'https://chzzk.naver.com'));
-  n.on('failed', (_e, err) => console.error('알림 표시 실패(off):', err));
-  n.show();
 }
 
 // ── 자동 업데이트 ─────────────────────────────────────────
@@ -346,14 +310,15 @@ function applyLaunchAtStartup(enabled) {
 
 // ── IPC ───────────────────────────────────────────────────
 function registerIpc() {
-  ipcMain.handle('members:get', () => poller.members);
-  ipcMain.handle('members:refresh', () => poller.pollOnce());
+  // 멤버 로스터는 웹(스텔라리움 계정)에서 관리한다 — 앱은 로컬 치지직 로스터를 더 이상 들고 있지 않는다.
+  ipcMain.handle('members:get', () => []);
+  ipcMain.handle('members:refresh', () => []);
 
   ipcMain.handle('settings:get', () => store.store);
-  ipcMain.handle('settings:set', (_e, patch) => {
+  ipcMain.handle('settings:set', (_e, rawPatch) => {
     const before = store.store;
+    const patch = sanitizeSettingsPatch(rawPatch); // 허용 키만(프로토타입 오염·임의 키 방지)
     store.set(patch);
-    if ('pollIntervalSec' in patch) poller.setInterval(patch.pollIntervalSec);
     if ('launchAtStartup' in patch && patch.launchAtStartup !== before.launchAtStartup) {
       applyLaunchAtStartup(patch.launchAtStartup);
     }
@@ -362,7 +327,7 @@ function registerIpc() {
     }
     // 언어가 바뀌면 트레이 메뉴/툴팁을 새 언어로 다시 그린다(알림은 표시 시점에 현재 언어 사용).
     if ('language' in patch && patch.language !== before.language) {
-      rebuildTrayMenu(lastTrayMembers);
+      rebuildTrayMenu();
     }
     return store.store;
   });
@@ -370,8 +335,8 @@ function registerIpc() {
   // ── 웹↔앱 알림 미러링 ──────────────────────────────────────
   // 앱 webview(stellarium.kr)가 로그인된 계정의 새 알림을 넘겨주면 네이티브 토스트로 띄운다.
   //  구독(어떤 스텔라의 live/X/유튜브)은 웹 계정에서 관리하고, 앱은 '표시'와 '브라우저 자동 열기'만 한다.
-  //  로그인돼 미러가 돌면 setMirrorActive(true) 로 앱 자체 폴링 알림을 끈다(중복 방지).
-  ipcMain.handle('mirror:active', (_e, active) => { webMirrorActive = !!active; return true; });
+  //  mirror:active 는 호환을 위해 남겨둔 ack(로컬 폴링이 없어 더 끌 것이 없다).
+  ipcMain.handle('mirror:active', () => true);
   ipcMain.handle('notify:fromWeb', (_e, item) => {
     try {
       if (!item || typeof item !== 'object') return { ok: false };
@@ -385,22 +350,21 @@ function registerIpc() {
         shownWebNotif.set(String(item.id), now);
       }
       const url = absUrl(item.url);
-      // live 방송이면 설정(autoOpenLive·autoOpenList)에 따라 브라우저 자동 열기
-      if (item.kind === 'live' && store.get('autoOpenLive') && url) {
-        let slug = item.slug;
-        if (!slug) { const mm = /\/go\/live\/([^/?#]+)/.exec(item.url || ''); if (mm) slug = decodeURIComponent(mm[1]); }
-        const list = store.get('autoOpenList');
-        const key = keyForSlug(slug);
-        const allowed = !Array.isArray(list) || !key || list.includes(key);
-        if (allowed) shell.openExternal(url);
-      }
+      // live 방송이면 '방송 시작 시 브라우저로 열기' 설정에 따라 자동으로 연다.
+      //  어떤 스텔라를 받을지(구독)는 웹 계정이 정하고, 그중 '브라우저로 열 스텔라'는
+      //  autoOpenList(slug 배열, null=전체)로 추린다. slug 는 웹이 넘겨 주거나 url 에서 뽑는다.
+      //  url(=/go/live/slug)은 웹에서 치지직으로 리다이렉트된다.
+      const slug = item.slug || (item.url && String(item.url).match(/\/go\/live\/([^/?#]+)/)?.[1]) || '';
+      const openList = store.get('autoOpenList'); // null/undefined = 신청한 스텔라 전체
+      const inOpenList = openList == null || (Array.isArray(openList) && openList.includes(slug));
+      if (item.kind === 'live' && store.get('autoOpenLive') && inOpenList && url) safeOpenExternal(url);
       const n = new Notification({
         title: item.title || '스텔라리움',
         body: item.body || '',
         icon: notifyIcon(),
         silent: false,
       });
-      n.on('click', () => { if (url) shell.openExternal(url); showWindow(); });
+      n.on('click', () => { if (url) safeOpenExternal(url); showWindow(); });
       n.on('failed', (_e2, err) => console.error('알림 표시 실패(web mirror):', err));
       n.show();
       return { ok: true };
@@ -441,43 +405,14 @@ function registerIpc() {
     catch { return {}; }
   });
 
-  ipcMain.handle('schedule:today', async () => {
-    try {
-      // 어제 00:00 ~ 오늘 23:59(KST)까지 받아온다. 어제 시작해 오늘까지 이어지는 방송을
-      // '오늘의 뱅온'에 반영할 수 있도록(실제 표시 여부는 렌더러가 라이브 여부로 판단).
-      const KST = 9 * 60 * 60 * 1000;
-      const now = new Date(Date.now() + KST); // UTC 필드 = KST 벽시계
-      const p = (n) => String(n).padStart(2, '0');
-      const dstr = (d) => `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}`;
-      const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-      const yesterday = new Date(today.getTime() - 86400000);
-      return await poller.client.schedule.getSchedules({
-        after: `${dstr(yesterday)}T00:00:00`,
-        before: `${dstr(today)}T23:59:59`,
-        size: 1000,
-      });
-    } catch (e) {
-      return { error: String(e?.message || e) };
-    }
-  });
-  // 기간(캘린더 표시 범위) 스케줄 — after/before 는 ISO 문자열.
-  ipcMain.handle('schedule:range', async (_e, { after, before } = {}) => {
-    try {
-      return await poller.client.schedule.getSchedules({ after, before, size: 1000 });
-    } catch (e) {
-      return { error: String(e?.message || e) };
-    }
-  });
-  ipcMain.handle('schedule:artist', async (_e, key) => {
-    try {
-      return await poller.client.schedule.getArtistSchedule(key);
-    } catch (e) {
-      return { error: String(e?.message || e) };
-    }
-  });
+  // 스케줄(뱅온·캘린더)은 로컬 치지직에서 더 이상 받아오지 않는다 — 스텔라리움 웹의 캘린더를
+  //  webview 로 임베드해 보여준다. 남아 있는 네이티브 대시보드 경로가 호출해도 빈 목록을 돌려준다.
+  ipcMain.handle('schedule:today', async () => []);
+  ipcMain.handle('schedule:range', async () => []);
+  ipcMain.handle('schedule:artist', async () => []);
 
   ipcMain.handle('open:external', (_e, url) => {
-    if (typeof url === 'string' && /^(https?:\/\/|mailto:)/.test(url)) shell.openExternal(url);
+    safeOpenExternal(url);
   });
 
   // web(stellarium.kr) 임베드 주소들. (기준 주소 webBase 는 모듈 상단에 정의)
@@ -594,38 +529,28 @@ app.whenReady().then(async () => {
     contents.on('did-navigate', update);
     contents.on('did-navigate-in-page', update);
     contents.on('page-title-updated', update);
+
+    // 외부 링크(유튜브·치지직 등)는 앱 안에서 열지 않고 기본 브라우저 새 탭으로 연다.
+    //  - 스텔라리움/로그인 URL 만 webview 안에서 이동(SPA 내부 이동은 will-navigate 가 아니므로 영향 없음).
+    contents.on('will-navigate', (e, url) => {
+      if (!keepInApp(url)) { e.preventDefault(); safeOpenExternal(url); }
+    });
+    contents.on('will-redirect', (e, url) => {
+      if (!keepInApp(url)) { e.preventDefault(); safeOpenExternal(url); }
+    });
+    // target=_blank · window.open 으로 새 창을 띄우려는 경우: 외부는 브라우저로, 내부는 현재 뷰에서 이동.
+    contents.setWindowOpenHandler(({ url }) => {
+      if (keepInApp(url)) { contents.loadURL(url); }
+      else { safeOpenExternal(url); }
+      return { action: 'deny' };
+    });
   });
 
   // 로그인 시 자동 실행 설정 반영
   applyLaunchAtStartup(store.get('launchAtStartup'));
 
-  // 폴러 이벤트 연결
-  poller.on('update', (members) => {
-    rebuildTrayMenu(members);
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('members:update', members);
-    }
-  });
-  poller.on('transitions', ({ wentLive, wentOffline }) => {
-    wentLive.forEach((m) => {
-      notifyLive(m);
-      maybeAutoOpen(m);
-    });
-    (wentOffline || []).forEach((m) => notifyOffline(m));
-    // 앱이 열려 있으면 인앱 플로팅 알림도 함께 표시
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('members:live', wentLive);
-    }
-  });
-  poller.on('polling', (busy) => {
-    mainWindow?.webContents.send('members:polling', busy);
-  });
-  poller.on('error', (err) => {
-    mainWindow?.webContents.send('members:error', String(err?.message || err));
-  });
-
-  await poller.init().catch(() => {});
-  poller.start(store.get('pollIntervalSec'));
+  // 로컬 치지직 폴링은 완전히 제거됐다 — 알림·브라우저 자동 열기는 모두 스텔라리움 계정
+  //  데이터(로그인된 webview inbox → components/AppNotifyMirror → notify:fromWeb)에서만 온다.
 
   setupAutoUpdater();
 

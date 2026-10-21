@@ -31,20 +31,7 @@ try {
       checkUpdate: () => ipcRenderer.invoke('update:checkWeb'),
       installUpdate: () => ipcRenderer.invoke('update:install'),
     });
-
-    // 앱 창 상단 좌측엔 창 신호등(닫기/최소화)이 떠 있다 — 웹의 공지·로고·nav 가 그 아래로
-    //  가리지 않도록 상단을 살짝 내린다. 웹 코드는 건드리지 않고(=일반 브라우저는 그대로),
-    //  앱 webview 에만 이 스타일을 주입한다. (sticky 헤더 .site-header 도 같은 높이로 내림)
-    const injectTopInset = () => {
-      try {
-        if (document.getElementById('stella-app-inset')) return;
-        const st = document.createElement('style');
-        st.id = 'stella-app-inset';
-        st.textContent = 'body{padding-top:30px !important}.site-header{top:30px !important}';
-        (document.head || document.documentElement).appendChild(st);
-      } catch { /* ignore */ }
-    };
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectTopInset);
-    else injectTopInset();
+    // (상단 인셋 주입은 제거됨 — 이제 webview 가 호스트의 30px 상단 strip 아래부터 시작하므로
+    //  웹의 공지·로고·nav 가 창 제어 영역에 가리지 않는다.)
   }
 } catch { /* 노출 실패해도 웹은 정상 동작 */ }
