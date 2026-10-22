@@ -1,5 +1,5 @@
 <!-- i18n:ko -->
-## 스텔라리움 v1.1.0
+## 스텔라리움 v1.1.1
 
 > v1.0.9 이후의 변경 사항을 담은 **정식(안정) 버전** 입니다.
 > 사용 중 이상이 있으면 설정 → 정보 → **문제 신고** 로 알려주세요.
@@ -27,7 +27,7 @@
 - **macOS** — macOS 12 (Monterey) 이상
 
 <!-- i18n:en -->
-## Stellarium v1.1.0
+## Stellarium v1.1.1
 
 > This is the **stable release** with the changes made since v1.0.9.
 > If something looks off, please report it via Settings → About → Report a problem.
@@ -54,7 +54,7 @@ Thank you so much for using Stellarium.
 - **macOS** — macOS 12 (Monterey) or later
 
 <!-- i18n:ja -->
-## Stellarium v1.1.0
+## Stellarium v1.1.1
 
 > v1.0.9 以降の変更を含む **正式（安定）版** です。
 > 不具合があれば、設定 → 情報 → 問題を報告 からお知らせください。
