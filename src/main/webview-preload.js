@@ -21,6 +21,9 @@ try {
       getMembers: () => ipcRenderer.invoke('members:get'),
       // 테스트 알림.
       testNotification: () => ipcRenderer.invoke('notify:test'),
+      // 로그인 — 구글은 webview 안 OAuth 를 막으므로(disallowed_useragent) 시스템 브라우저로 연다.
+      //  앱이 /api/auth/start?...&app=1 을 기본 브라우저에서 열고, stellarium:// 딥링크로 세션이 돌아온다.
+      login: (provider) => ipcRenderer.invoke('auth:openExternal', provider),
       // 알림 미러링 — 로그인된 계정의 새 알림(inbox 항목)을 앱이 네이티브 토스트로 띄우게 넘긴다.
       //  payload: { id, kind, title, body?, url?, slug? }.
       notify: (payload) => ipcRenderer.invoke('notify:fromWeb', payload),

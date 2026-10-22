@@ -107,6 +107,12 @@ mac:
   executableName: Stellarium
   extendInfo:
     CFBundleDisplayName: 스텔라리움
+    # 로그인 복귀용 커스텀 스킴 — macOS 가 stellarium:// 딥링크를 이 앱으로 라우팅하려면
+    #  Info.plist 에 선언돼야 한다(런타임 setAsDefaultProtocolClient 만으론 불안정).
+    CFBundleURLTypes:
+      - CFBundleURLName: com.stellastatus.app
+        CFBundleURLSchemes:
+          - stellarium
 
 dmg:
   # 파일명은 ASCII 로 고정한다. (한글이 들어가면 GitHub 업로드 시 이름이 잘려

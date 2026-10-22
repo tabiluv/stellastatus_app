@@ -7,8 +7,8 @@
 스텔라리움을 이용해주시는 분들께 진심으로 감사드립니다.
 
 # 수정된 내용
-- **창 이동 불가 오류 수정** — 저번 업데이트에서 화면을 확장하기 위해 상단 바 제거 업데이트를 진행하였으나, 그로 인해 창 드래그가 불가한 오류가 있었어요.
-- **알림 및 브라우저로 보기 기능 통합** - 이제 기능을 제대로 이용하려면 스텔라리움에 로그인 해야해요. 1.1.0 이후부터 로컬 파일로 저장하던 알림 기능을 스텔라리움 웹과 연동하여 앱에서도 계정에 저장된 설정을 따라가도록 변경되었어요.
+- **시스템 트레이 기능 누락 해결** - 저번 업데이트에서 누락된 시스템 트레이에 관한 기능을 배포했어요. 이 문제는 새로운 로그인에만 이슈가 발생하였으며, 기존에 로그인하셨던 파스텔분들은 그대로 이용하실 수 있어요.
+
 - **스텔라 브라우저 개발에 따른 업데이트 주기 변경** - 스텔라리움 앱의 기능을 포함한 파스텔 전용 "스텔라 브라우저"의 개발이 시작되며, 이에 따라 스텔라리움 앱의 업데이트 주기가 변동될 수 있어요. Webview 특성 상 웹의 업데이트에 따라 앱 또한 자동으로 적용되니 참고바랍니다.
 
 ### 설치 방법
@@ -35,8 +35,7 @@
 Thank you so much for using Stellarium.
 
 # What's changed
-- **Fixed: the window couldn't be moved** — the previous update removed the top bar to give you more screen, but that left the window impossible to drag. It's fixed now.
-- **Notifications & "open in browser" unified** — to use these features properly, you now need to sign in to Stellarium. From 1.1.0, notification settings that used to be saved in local files are linked with Stellarium web, so the app follows the settings saved to your account.
+- **Fixed: missing system-tray feature** — we've shipped the system-tray feature that was dropped in the last update. The problem only affected new sign-ins; Pastels who were already signed in could keep using it as before.
 - **Update cadence may change as the Stella Browser is developed** — work has begun on "Stella Browser," a Pastel-exclusive browser that includes the Stellarium app's features, so the Stellarium app's update cadence may shift accordingly. Note that, by the nature of a webview, web updates are applied to the app automatically as well.
 
 ### How to install
@@ -63,8 +62,7 @@ Thank you so much for using Stellarium.
 Stellarium をご利用いただきありがとうございます。
 
 # 変更内容
-- **ウィンドウを移動できない不具合を修正** — 前回のアップデートで画面を広げるために上部バーを削除しましたが、その影響でウィンドウをドラッグできない不具合がありました。今回修正しました。
-- **通知と「ブラウザで開く」機能の統合** — これらの機能をきちんと使うには、Stellarium へのログインが必要になりました。1.1.0 以降、これまでローカルファイルに保存していた通知設定を Stellarium ウェブと連携し、アプリでもアカウントに保存された設定に従うようになりました。
+- **システムトレイ機能の欠落を修正** — 前回のアップデートで欠落していたシステムトレイ関連の機能を配信しました。この問題は新規ログインでのみ発生し、すでにログイン済みのパステルの方はそのままご利用いただけます。
 - **ステラブラウザの開発に伴う更新頻度の変更** — Stellarium アプリの機能を含むパステル専用「ステラブラウザ」の開発が始まり、それに伴い Stellarium アプリの更新頻度が変わる場合があります。Webview の特性上、ウェブの更新に合わせてアプリにも自動的に反映されますのでご了承ください。
 
 ### インストール方法

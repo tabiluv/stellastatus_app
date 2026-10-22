@@ -122,12 +122,51 @@ app.commandLine.appendSwitch('disable-gpu-program-cache');
 process.on('uncaughtException', (err) => console.error('메인 예외:', err));
 process.on('unhandledRejection', (reason) => console.error('메인 거부:', reason));
 
-// 단일 인스턴스 보장 — 두 번째 실행 시 기존 창을 띄운다.
+// ── 딥링크(stellarium://) — 앱 로그인 복귀 ────────────────────
+//  시스템 브라우저에서 로그인(구글 webview 차단 회피) → 콜백이 stellarium://auth?t=<암호화 티켓>
+//  으로 돌려보낸다. OS 가 이 스킴을 앱으로 라우팅하면 아래에서 받아 webview 를 app-finish 로 보낸다.
+const DEEP_SCHEME = 'stellarium';
+if (process.defaultApp) {
+  // 개발 모드: electron 바이너리로 실행 중이라 스킴 등록에 실행 인자를 함께 넣어야 한다.
+  if (process.argv.length >= 2) app.setAsDefaultProtocolClient(DEEP_SCHEME, process.execPath, [path.resolve(process.argv[1])]);
+} else {
+  app.setAsDefaultProtocolClient(DEEP_SCHEME);
+}
+
+let pendingAuthFinish = null; // 창이 아직 준비 안 됐을 때 들어온 딥링크를 보관
+function flushAuthFinish() {
+  if (!pendingAuthFinish) return;
+  if (!mainWindow || mainWindow.isDestroyed() || !mainWindow.webContents || mainWindow.webContents.isLoading()) return;
+  const p = pendingAuthFinish; pendingAuthFinish = null;
+  showWindow();
+  mainWindow.webContents.send('auth:finish', p);
+}
+// 딥링크에서 **티켓(t)만** 뽑아 우리 app-finish 경로를 직접 만든다 — 링크가 시키는 임의 주소로
+//  webview 를 보내지 않는다(오픈 리다이렉트/탈취 방지). 스킴·토큰이 아니면 무시.
+function handleDeepLink(url) {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== `${DEEP_SCHEME}:`) return;
+    const t = u.searchParams.get('t');
+    if (!t) return;
+    pendingAuthFinish = `/api/auth/app-finish?t=${encodeURIComponent(t)}`;
+  } catch { return; }
+  flushAuthFinish();
+}
+
+// macOS 는 open-url 이벤트로 딥링크가 온다(앱이 꺼져 있다 켜질 때도). ready 전에 올 수 있어 일찍 건다.
+app.on('open-url', (_e, url) => { handleDeepLink(url); });
+
+// 단일 인스턴스 보장 — 두 번째 실행 시 기존 창을 띄운다. 윈도우/리눅스는 딥링크가 argv 로 온다.
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
 } else {
-  app.on('second-instance', () => showWindow());
+  app.on('second-instance', (_e, argv) => {
+    showWindow();
+    const link = argv.find((a) => typeof a === 'string' && a.startsWith(`${DEEP_SCHEME}://`));
+    if (link) handleDeepLink(link);
+  });
 }
 
 // ── 창 ────────────────────────────────────────────────────
@@ -167,6 +206,9 @@ function createWindow() {
   });
 
   mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+
+  // 렌더러가 다 뜬 뒤, 창이 준비되기 전에 들어와 보류된 로그인 딥링크가 있으면 그때 보낸다.
+  mainWindow.webContents.on('did-finish-load', flushAuthFinish);
 
   mainWindow.once('ready-to-show', () => {
     // 부팅 자동 실행(--hidden) 또는 startHidden 설정이면 창을 띄우지 않고 트레이에만 상주
@@ -215,20 +257,53 @@ function createTray() {
   tray.on('click', () => showWindow());
 }
 
+// 지금 방송 중 목록 — 스텔라리움 웹(/api/live, 4기·강지 포함)에서 주기적으로 받아 트레이에 표시.
+//  null = 아직 모름(앱 이름만). 각 항목 { name, url, viewerCount }. 로컬 치지직이 아니라 웹 데이터.
+let liveList = null;
+
 function rebuildTrayMenu() {
   if (!tray) return;
-  // 로컬 방송 감지를 쓰지 않으므로 트레이는 단순하게 — 창 열기/설정/업데이트/종료만.
-  const menu = Menu.buildFromTemplate([
-    { label: '스텔라리움', enabled: false },
-    { type: 'separator' },
+  const count = Array.isArray(liveList) ? liveList.length : null;
+  // 맨 윗줄: '현재 N명 방송 중'(모르면 앱 이름, 0명이면 "방송 중인 멤버가 없습니다").
+  const header = count == null
+    ? '스텔라리움'
+    : count > 0
+      ? i18n.t('tray.header', { n: count })
+      : i18n.t('tray.noLive');
+  // 방송 중인 스텔라를 한 줄씩 — 누르면 기본 브라우저로 방송을 연다.
+  const liveItems = (Array.isArray(liveList) ? liveList : [])
+    .filter((m) => m && m.name)
+    .map((m) => ({
+      label: `🔴 ${m.name}${m.viewerCount != null ? `  ${i18n.t('tray.viewers', { n: Number(m.viewerCount).toLocaleString() })}` : ''}`,
+      click: () => { if (m.url) safeOpenExternal(m.url); },
+    }));
+
+  const template = [{ label: header, enabled: false }, { type: 'separator' }];
+  if (liveItems.length) template.push(...liveItems, { type: 'separator' });
+  template.push(
     { label: i18n.t('tray.open'), click: () => showWindow() },
     { label: i18n.t('tray.settings'), click: () => { showWindow(); if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('open:settings'); } },
     { label: i18n.t('tray.checkUpdate'), click: () => { showWindow(); if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('update:check-manual'); } },
     { type: 'separator' },
     { label: i18n.t('tray.quit'), click: () => quitApp() },
-  ]);
-  tray.setContextMenu(menu);
-  tray.setToolTip('스텔라리움');
+  );
+  tray.setContextMenu(Menu.buildFromTemplate(template));
+  tray.setToolTip(count > 0 ? i18n.t('tray.tooltip', { n: count }) : '스텔라리움');
+}
+
+// 스텔라리움 웹에서 지금 방송 중 목록을 받아 트레이를 갱신한다(실패하면 조용히 유지).
+async function refreshLiveCount() {
+  try {
+    const r = await fetch(`${webBase()}/api/live`, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return;
+    const d = await r.json();
+    const next = Array.isArray(d?.live)
+      ? d.live.map((x) => ({ name: x?.name || '', url: x?.url || '', viewerCount: x?.viewerCount }))
+      : [];
+    // 내용이 바뀌었을 때만 다시 그린다(이름·인원·시청자수 비교).
+    const sig = (l) => (l || []).map((m) => `${m.name}|${m.viewerCount}`).join(';');
+    if (sig(next) !== sig(liveList)) { liveList = next; rebuildTrayMenu(); }
+  } catch { /* 네트워크 일시 오류 — 다음 주기에 다시 시도 */ }
 }
 
 function quitApp() {
@@ -415,6 +490,14 @@ function registerIpc() {
     safeOpenExternal(url);
   });
 
+  // 로그인 — 시스템 브라우저에서 /api/auth/start 를 연다(구글 webview OAuth 차단 회피).
+  //  provider 는 반드시 화이트리스트로 검증한다(임의 값으로 URL 을 조립하지 않는다).
+  ipcMain.handle('auth:openExternal', (_e, provider) => {
+    if (provider !== 'google' && provider !== 'naver') return false;
+    safeOpenExternal(`${webBase()}/api/auth/start?provider=${provider}&app=1`);
+    return true;
+  });
+
   // web(stellarium.kr) 임베드 주소들. (기준 주소 webBase 는 모듈 상단에 정의)
   ipcMain.handle('app:webCalUrl', () => process.env.STELLA_WEB_CAL_URL || `${webBase()}/calendar`);
   // 스텔라리움(통합) 화면으로 임베드할 홈 주소.
@@ -515,6 +598,14 @@ app.whenReady().then(async () => {
   registerIpc();
   createWindow();
   createTray();
+
+  // 꺼져 있던 앱이 딥링크로 켜진 경우(윈도우/리눅스): 첫 실행 argv 에 stellarium:// 가 실려 온다.
+  const coldLink = process.argv.find((a) => typeof a === 'string' && a.startsWith(`${DEEP_SCHEME}://`));
+  if (coldLink) handleDeepLink(coldLink);
+
+  // 트레이의 '현재 N명 방송 중'은 스텔라리움 웹에서 받아 채운다 — 시작 시 1회 + 이후 60초마다.
+  refreshLiveCount();
+  setInterval(refreshLiveCount, 60 * 1000);
 
   // 디스코드 Rich Presence — 스텔라리움 webview 가 이동/제목변경할 때마다 '보는 중' 상태를 갱신한다.
   discord.init();

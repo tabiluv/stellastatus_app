@@ -2016,6 +2016,9 @@
     // 멤버/폴링/라이브 푸시 리스너는 제거됐다 — 로컬 치지직 폴링이 사라져 메인에서 더 이상
     //  보내지 않는다. 방송 상태·알림은 스텔라리움 웹(webview)이 담당한다. 업데이트 상태만 유지.
     api.onUpdateStatus(handleUpdate);
+    // 시스템 브라우저 로그인 후 stellarium:// 딥링크로 돌아오면, 그 app-finish 주소로 webview 를
+    //  이동시켜 세션을 webview 에 세운다(= 앱이 로그인 상태가 된다).
+    api.onAuthFinish?.((pathUrl) => { if (pathUrl) showStellarium(pathUrl); });
   }
 
   window.addEventListener('DOMContentLoaded', init);
