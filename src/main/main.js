@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
-const { randomUUID } = require('node:crypto');
+const { randomUUID, randomBytes, createHash } = require('node:crypto');
 const {
   app,
   BrowserWindow,
@@ -13,6 +13,7 @@ const {
   nativeImage,
   dialog,
   clipboard,
+  session,
 } = require('electron');
 const updater = require('./updater');
 const store = require('./store');
@@ -134,12 +135,26 @@ if (process.defaultApp) {
 }
 
 let pendingAuthFinish = null; // 창이 아직 준비 안 됐을 때 들어온 딥링크를 보관
-function flushAuthFinish() {
+let loginNonce = null; // 로그인 시작 때 만든 비밀 nonce — start 엔 커밋만, 복귀 때 webview 쿠키로만 건넨다
+async function flushAuthFinish() {
   if (!pendingAuthFinish) return;
   if (!mainWindow || mainWindow.isDestroyed() || !mainWindow.webContents || mainWindow.webContents.isLoading()) return;
   const p = pendingAuthFinish; pendingAuthFinish = null;
+  const n = loginNonce; loginNonce = null;
   showWindow();
-  mainWindow.webContents.send('auth:finish', p);
+  // nonce 를 webview(= 기본 세션, 파티션 없음) 쿠키로 심은 **뒤** app-finish 로 이동시킨다.
+  //  URL 엔 절대 싣지 않는다(공격자가 피해자 브라우저에 심을 수 없는 유일한 통로가 쿠키다).
+  if (n) {
+    const base = webBase();
+    try {
+      await session.defaultSession.cookies.set({
+        url: base, name: 'stlm_app_n', value: n,
+        path: '/api/auth', httpOnly: true, secure: base.startsWith('https'), sameSite: 'lax',
+        expirationDate: Math.floor(Date.now() / 1000) + 120,
+      });
+    } catch (e) { /* 실패하면 app-finish 가 거절 → 사용자가 재시도 */ }
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('auth:finish', p);
 }
 // 딥링크에서 **티켓(t)만** 뽑아 우리 app-finish 경로를 직접 만든다 — 링크가 시키는 임의 주소로
 //  webview 를 보내지 않는다(오픈 리다이렉트/탈취 방지). 스킴·토큰이 아니면 무시.
@@ -492,9 +507,13 @@ function registerIpc() {
 
   // 로그인 — 시스템 브라우저에서 /api/auth/start 를 연다(구글 webview OAuth 차단 회피).
   //  provider 는 반드시 화이트리스트로 검증한다(임의 값으로 URL 을 조립하지 않는다).
+  //  로그인 CSRF 방지: 비밀 nonce 를 만들어 **커밋(sha256)만** start 로 보낸다. nonce 자체는
+  //  이 프로세스 메모리에만 두고(loginNonce), 돌아오는 길에 webview 쿠키로만 건넨다(flushAuthFinish).
   ipcMain.handle('auth:openExternal', (_e, provider) => {
     if (provider !== 'google' && provider !== 'naver') return false;
-    safeOpenExternal(`${webBase()}/api/auth/start?provider=${provider}&app=1`);
+    loginNonce = randomBytes(32).toString('base64url');
+    const commit = createHash('sha256').update(loginNonce).digest('base64url');
+    safeOpenExternal(`${webBase()}/api/auth/start?provider=${provider}&app=1&c=${commit}`);
     return true;
   });
 
