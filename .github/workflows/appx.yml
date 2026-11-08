@@ -1,0 +1,46 @@
+name: Build APPX (Microsoft Store)
+
+# 마이크로소프트 스토어 제출용 .appx 를 Windows 러너에서 빌드해 산출물(artifact)로 올린다.
+#  appx/msix 패키징은 Windows SDK(makeappx/makepri)가 필요해 macOS·Linux 에선 못 만든다.
+#  수동 실행만 한다 — Actions 탭의 "Run workflow" 또는 `gh workflow run appx.yml`.
+#  서명은 하지 않는다(--publish never) — 스토어가 업로드 시 재서명하므로 제출용은 미서명이 맞다.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  appx:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      # 아이콘·로고·appx 자산 생성 후 electron-builder 로 .appx 패키징(설정은 electron-builder.yml 의 appx:)
+      - name: Build APPX (Store, unsigned)
+        run: npm run build-appx
+
+      - name: List build output
+        shell: bash
+        run: ls -la dist/ || true
+
+      - name: Upload APPX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stellarium-appx
+          path: |
+            dist/*.appx
+            dist/*.msix
+            dist/*.appxupload
+            dist/*.msixupload
+          if-no-files-found: error
+          retention-days: 14
