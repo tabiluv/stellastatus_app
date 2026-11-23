@@ -2018,7 +2018,19 @@
     api.onUpdateStatus(handleUpdate);
     // 시스템 브라우저 로그인 후 stellarium:// 딥링크로 돌아오면, 그 app-finish 주소로 webview 를
     //  이동시켜 세션을 webview 에 세운다(= 앱이 로그인 상태가 된다).
-    api.onAuthFinish?.((pathUrl) => { if (pathUrl) showStellarium(pathUrl); });
+    //  진행/미완료 안내: 로그인 시작 시 안내 토스트를 띄우고, 복귀하면 닫고, 끝내 안 오면 재시도 안내.
+    let loginPendingClose = null;
+    const closeLoginPending = () => { try { loginPendingClose?.(); } catch { /* ignore */ } loginPendingClose = null; };
+    api.onAuthPending?.(() => {
+      closeLoginPending();
+      loginPendingClose = showToast({ icon: 'refresh', spin: true, duration: 0,
+        title: T('toast.loginPending'), desc: T('toast.loginPendingDesc') });
+    });
+    api.onAuthFinish?.((pathUrl) => { closeLoginPending(); if (pathUrl) showStellarium(pathUrl); });
+    api.onAuthTimeout?.(() => {
+      closeLoginPending();
+      showToast({ icon: 'alert', duration: 8000, title: T('toast.loginTimeout'), desc: T('toast.loginTimeoutDesc') });
+    });
   }
 
   window.addEventListener('DOMContentLoaded', init);

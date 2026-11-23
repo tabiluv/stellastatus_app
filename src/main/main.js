@@ -136,11 +136,30 @@ if (process.defaultApp) {
 
 let pendingAuthFinish = null; // 창이 아직 준비 안 됐을 때 들어온 딥링크를 보관
 let loginNonce = null; // 로그인 시작 때 만든 비밀 nonce — start 엔 커밋만, 복귀 때 webview 쿠키로만 건넨다
+let authTimeoutTimer = null; // 로그인 후 딥링크가 안 돌아오면 안내를 띄우는 타이머
+
+// 콜드스타트(앱이 꺼졌다 stellarium:// 로 켜질 때) 대비 — nonce 는 로그인을 시작한 프로세스 메모리에만
+//  있어 새 프로세스엔 없다. 그래서 짧게 디스크에도 둬, 콜드스타트 flush 가 복원한다(일회성·10분 만료).
+function nonceFile() { try { return path.join(app.getPath('userData'), '.auth-nonce'); } catch { return null; } }
+function persistNonce(n) { const f = nonceFile(); if (!f) return; try { fs.writeFileSync(f, JSON.stringify({ n, at: Date.now() }), { mode: 0o600 }); } catch { /* 실패해도 메모리 경로는 동작 */ } }
+function takePersistedNonce() {
+  const f = nonceFile(); if (!f) return null;
+  try {
+    const raw = fs.readFileSync(f, 'utf8');
+    try { fs.unlinkSync(f); } catch { /* ignore */ } // 일회성
+    const o = JSON.parse(raw);
+    if (o && typeof o.n === 'string' && typeof o.at === 'number' && Date.now() - o.at < 10 * 60 * 1000) return o.n;
+  } catch { /* 없거나 깨짐 */ }
+  return null;
+}
+function clearPersistedNonce() { const f = nonceFile(); if (!f) return; try { fs.unlinkSync(f); } catch { /* ignore */ } }
 async function flushAuthFinish() {
   if (!pendingAuthFinish) return;
   if (!mainWindow || mainWindow.isDestroyed() || !mainWindow.webContents || mainWindow.webContents.isLoading()) return;
   const p = pendingAuthFinish; pendingAuthFinish = null;
-  const n = loginNonce; loginNonce = null;
+  // 메모리에 있으면 그걸(웜), 없으면 디스크 사본(콜드스타트)을 쓴다. 둘 다 쓰고 나면 사본 폐기.
+  const n = loginNonce || takePersistedNonce(); loginNonce = null; clearPersistedNonce();
+  if (authTimeoutTimer) { clearTimeout(authTimeoutTimer); authTimeoutTimer = null; } // 복귀했으니 안내 타이머 취소
   showWindow();
   // nonce 를 webview(= 기본 세션, 파티션 없음) 쿠키로 심은 **뒤** app-finish 로 이동시킨다.
   //  URL 엔 절대 싣지 않는다(공격자가 피해자 브라우저에 심을 수 없는 유일한 통로가 쿠키다).
@@ -512,8 +531,16 @@ function registerIpc() {
   ipcMain.handle('auth:openExternal', (_e, provider) => {
     if (provider !== 'google' && provider !== 'naver') return false;
     loginNonce = randomBytes(32).toString('base64url');
+    persistNonce(loginNonce); // 콜드스타트(앱이 꺼졌다 딥링크로 켜질 때) 대비 디스크 사본
     const commit = createHash('sha256').update(loginNonce).digest('base64url');
     safeOpenExternal(`${webBase()}/api/auth/start?provider=${provider}&app=1&c=${commit}`);
+    // 진행 안내(토스트) + 딥링크가 끝내 안 돌아오면(핸드오프 실패) 안내 타이머.
+    try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('auth:pending'); } catch { /* ignore */ }
+    if (authTimeoutTimer) clearTimeout(authTimeoutTimer);
+    authTimeoutTimer = setTimeout(() => {
+      authTimeoutTimer = null;
+      try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('auth:timeout'); } catch { /* ignore */ }
+    }, 5 * 60 * 1000); // 느린 로그인 오판을 피하려 넉넉히(5분)
     return true;
   });
 

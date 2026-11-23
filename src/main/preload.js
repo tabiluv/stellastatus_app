@@ -47,6 +47,8 @@ contextBridge.exposeInMainWorld('stella', {
   onCheckUpdate: (cb) => sub('update:check-manual', cb),
   // 로그인 딥링크 복귀 — 시스템 브라우저 로그인 후 받은 app-finish 경로를 webview 로 이동시킨다
   onAuthFinish: (cb) => sub('auth:finish', cb),
+  onAuthPending: (cb) => sub('auth:pending', cb),
+  onAuthTimeout: (cb) => sub('auth:timeout', cb),
 
   // 업데이트
   getVersion: () => ipcRenderer.invoke('app:version'),

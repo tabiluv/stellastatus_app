@@ -30,6 +30,15 @@ win:
   icon: build/icon.png
   # 실행 파일에 표기될 정보
   legalTrademarks: Stellarium
+  # 로그인 복귀용 커스텀 스킴(stellarium://). 이 선언으로:
+  #  - APPX(스토어): AppxManifest 에 windows.protocol 확장이 생겨 OS 가 딥링크를 앱으로 라우팅한다.
+  #    MSIX 는 샌드박스라 런타임 setAsDefaultProtocolClient 만으론 스킴 등록이 안 되므로 필수.
+  #  - NSIS: 설치 관리자가 레지스트리에 스킴을 등록한다(런타임 등록보다 견고).
+  #  (macOS 는 mac.extendInfo.CFBundleURLTypes 로 따로 선언 — win 스코프라 영향 없음)
+  protocols:
+    - name: 스텔라리움 로그인
+      schemes:
+        - stellarium
 
 nsis:
   oneClick: false                 # 설치 도우미(마법사) 표시

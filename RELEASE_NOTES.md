@@ -1,13 +1,13 @@
 <!-- i18n:ko -->
-## 스텔라리움 v1.1.2
+## 스텔라리움 v1.1.3
 
-> v1.1.1 이후의 변경 사항을 담은 **정식(안정) 버전** 입니다.
+> v1.1.2 이후의 변경 사항을 담은 **정식(안정) 버전** 입니다.
 > 사용 중 이상이 있으면 설정 → 정보 → **문제 신고** 로 알려주세요.
 
 스텔라리움을 이용해주시는 분들께 진심으로 감사드립니다.
 
 # 수정된 내용
-- **로그인 보안 강화** - 데스크톱 앱 로그인 과정을 더 안전하게 보완했어요. 이미 로그인하신 파스텔분들은 영향 없이 그대로 이용하실 수 있고, 이 변경은 **이 업데이트 이후 새로 로그인할 때**부터 적용돼요. 원활한 로그인을 위해 최신 버전으로 업데이트해 주세요.
+- **로그인 문제 해결** - 일부 환경에서 구글·네이버 로그인을 마쳐도 앱으로 로그인이 돌아오지 않던 문제를 고쳤어요. 이제 브라우저에서 로그인을 끝내면 **"앱으로 돌아가기"** 로 확실하게 연결되고, 앱이 꺼져 있다 로그인으로 다시 켜지는 경우도 정상 처리돼요. 로그인 진행 상황도 앱에서 안내해 드려요. 이미 로그인하신 파스텔분들은 영향 없이 그대로 이용하실 수 있어요.
 
 ### 설치 방법
 **Windows**
@@ -25,15 +25,15 @@
 - **macOS** — macOS 12 (Monterey) 이상
 
 <!-- i18n:en -->
-## Stellarium v1.1.2
+## Stellarium v1.1.3
 
-> This is the **stable release** with the changes made since v1.1.1.
+> This is the **stable release** with the changes made since v1.1.2.
 > If something looks off, please report it via Settings → About → Report a problem.
 
 Thank you so much for using Stellarium.
 
 # What's changed
-- **Hardened login security** — we've strengthened the desktop app's sign-in flow. Pastels who are already signed in are unaffected and can keep using it as before; this change applies **the next time you sign in** after this update. Please update to the latest version for a smooth sign-in.
+- **Fixed sign-in** — on some setups, finishing Google/Naver sign-in didn't carry back into the app. Now, once you finish signing in on your browser, **"Return to the app"** connects reliably — including when the app was closed and reopened by the sign-in. The app also shows sign-in progress. Pastels who are already signed in are unaffected.
 
 ### How to install
 **Windows**
@@ -51,15 +51,15 @@ Thank you so much for using Stellarium.
 - **macOS** — macOS 12 (Monterey) or later
 
 <!-- i18n:ja -->
-## Stellarium v1.1.2
+## Stellarium v1.1.3
 
-> v1.1.1 以降の変更を含む **正式（安定）版** です。
+> v1.1.2 以降の変更を含む **正式（安定）版** です。
 > 不具合があれば、設定 → 情報 → 問題を報告 からお知らせください。
 
 Stellarium をご利用いただきありがとうございます。
 
 # 変更内容
-- **ログインのセキュリティ強化** — デスクトップアプリのログイン手順をより安全に改善しました。すでにログイン済みのパステルの方は影響なくそのままご利用いただけます。この変更は、このアップデート以降に**新しくログインする際**から適用されます。スムーズにログインできるよう、最新バージョンへの更新をお願いします。
+- **ログイン不具合の修正** — 一部の環境で、Google・Naver のログインを終えてもアプリにログインが戻らない問題を修正しました。ブラウザでログインを完了すると **「アプリに戻る」** で確実につながり、アプリが閉じていてログインで再び開く場合も正しく処理されます。ログインの進行状況もアプリ内でご案内します。すでにログイン済みのパステルの方は影響なくそのままご利用いただけます。
 
 ### インストール方法
 **Windows**
